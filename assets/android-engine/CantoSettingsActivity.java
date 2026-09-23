@@ -230,10 +230,7 @@ public class CantoSettingsActivity extends Activity {
         }
     }
 
-    private File resolveModelDir() {
-        try { return CantoModelSetup.ensure(this); }
-        catch (Throwable t) { return new File(getFilesDir(), "models/canto"); }
-    }
+
 
     private String currentLang() {
         return getSharedPreferences(PREFS, MODE_PRIVATE).getString(KEY_LANG, "canto");

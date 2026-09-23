@@ -348,14 +348,6 @@ public class CantoTtsService extends TextToSpeechService {
      *   不是"目录存在" —— 目录在但模型没推完是最坑的中间状态。
      * ⚠️ 兜底:内部没有就用外部(install.sh 可能只推了外部)。
      */
-    /**
-     * 解析模型目录 —— 【委托给 CantoModelSetup.ensure()】。
-     * ⚠️ 2026-09-26:原来这段逻辑在本类里(private),导致【Activity 没法触发自拷】,
-     *   一键 install 之后内部模型是空的。抽成静态工具后两处共用。
-     */
-    private File resolveModelDir() {
-        return CantoModelSetup.ensure(this);
-    }
 
     private CantoVoiceBank loadVoiceBank(File dir) {
         File vb = new File(dir, "voicebank");
