@@ -239,7 +239,8 @@ android/
 ```
 本引擎【不自己写】root 提示,而是复用统一模块:
   资产副本: assets/android-engine/rootgate/com/bbsoy/rootgate/RootGate.java
-  源头模块: ~/Documents/repo/android-rootgate/
+  ⚠️ 原「root 网关」模块(~Documents/repo/android-rootgate/)已于 2026-09-28 【整体退役删除】。
+     本 App 现【不依赖 root】—— 进程内推理 + 常驻透明 overlay 防冻,详见 NOTES.md §去 root。
 ```
 
 **它做三件事**:① 用 root 前弹窗说明(逐条列为什么 + 用途范围)
