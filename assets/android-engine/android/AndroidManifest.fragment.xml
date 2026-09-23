@@ -1,0 +1,38 @@
+<!--
+  SPDX-License-Identifier: AGPL-3.0-or-later
+  canto-tts 系统 TTS 引擎 —— 服务声明【四件套】
+
+  ⚠️ 这四件套是从「系统 TTS 悬案」的结案里得来的,缺一不可:
+    ① android:exported="true"
+    ② android:permission="android.permission.BIND_TEXT_TO_SPEECH_ENGINE"
+       —— 声明"只有持该权限的系统才能绑定"。缺失时系统可能因安全策略【拒绝绑定】,
+          表现为"注册了但从不被调用"(我们在这上面浪费过大量排查时间)。
+    ③ <action android:name="android.intent.action.TTS_SERVICE" />
+    ④ <category android:name="android.intent.category.DEFAULT" />
+       —— 对标 VoxSherpa 的声明,发现我们原缺这条。
+    ⑤ <meta-data android:name="android.speech.tts" android:resource="@xml/tts_engine" />
+       —— 指向引擎配置(settingsActivity 等)。
+
+  ⚠️ 另一个关键事实(别误判):
+    握住引擎的【不是调用方 App,而是 system_server】(uid 1000)。
+    Android 15+ 由 TextToSpeechManagerPerUserService 代绑。
+    ⇒ 普通 App【直接】bindService 会被拒(SecurityException: Not allowed to bind ...)
+    ⇒ 【"普通 App 直接 bind 失败"不能当作"系统不调用我们"的证据】
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <service
+            android:name="canto.CantoTtsService"
+            android:exported="true"
+            android:label="canto-tts 粤语引擎"
+            android:permission="android.permission.BIND_TEXT_TO_SPEECH_ENGINE">
+            <intent-filter>
+                <action android:name="android.intent.action.TTS_SERVICE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.speech.tts"
+                android:resource="@xml/tts_engine" />
+        </service>
+    </application>
+</manifest>

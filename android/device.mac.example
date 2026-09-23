@@ -1,0 +1,4 @@
+# 目标设备的 MAC(设备寻址纪律 §P1:用 MAC,不用 IP)
+# 用法:cp device.mac.example device.mac 然后填上你自己的设备 MAC
+# 查看:.adb devices 后 ip neigh show 里按 lladdr 匹配;或见 ~/AGENTS.md §P1
+00:00:00:00:00:00

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SPDX-License-Identifier: AGPL-3.0-or-later
+  系统 TTS 引擎配置。settingsActivity 指向音色选择/试听页(可后补)。
+-->
+<tts-engine xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="canto.CantoSettingsActivity" />

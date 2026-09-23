@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SPDX-License-Identifier: AGPL-3.0-or-later
+  canto-tts 系统 TTS 引擎 —— APK 清单
+
+  ⚠️ 服务声明【四件套】(从"系统 TTS 悬案"结案得来,缺一不可):
+    ① android:exported="true"
+    ② android:permission="android.permission.BIND_TEXT_TO_SPEECH_ENGINE"
+    ③ <action android:name="android.intent.action.TTS_SERVICE" />
+    ④ <category android:name="android.intent.category.DEFAULT" />
+    ⑤ <meta-data android:name="android.speech.tts" android:resource="@xml/tts_engine" />
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="canto.tts"
+    android:versionCode="1"
+    android:versionName="0.1.0">
+
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="36" />
+
+    <!--
+      🔴 Anthropic Android 11+ 的【包可见性】限制:App 默认【看不见任何包】。
+         我们要跳转到 root 管理器(KernelSU / Magisk)去让用户授权,
+         所以【必须】在这里声明它们的包名 —— 否则 getLaunchIntentForPackage 永远返回 null,
+         表现就是「点申请 root 没反应」。
+      ⚠️ 若你的 root 管理器【改了包名/隐身】(KernelSU 支持随机包名),
+         这里的声明就匹配不上 ⇒ App 会退到"打开本应用设置页"并【明确告知】
+         (不会静默失败 —— 见 ~/AGENTS.md §P2)。
+      ⚠️ 也声明了标准 TTS_SERVICE(引擎客户端需要)。
+    -->
+    <queries>
+        <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
+        <!-- root 管理器 -->
+        <package android:name="me.weishu.kernelsu" />
+        <package android:name="com.topjohnwu.magisk" />
+        <package android:name="me.bmax.apatch" />
+        <package android:name="com.kingroot.kinguser" />
+        <package android:name="eu.chainfire.supersu" />
+        <package android:name="com.saurik.substrate" />
+        <!-- 系统设置(兜底:跳应用详情页) -->
+        <intent><action android:name="android.settings.APPLICATION_DETAILS_SETTINGS" /></intent>
+    </queries>
+
+
+
+    <!-- TTS 引擎不需要网络:模型与资产全在本地(离线自洽) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- ⚠️ 必需:Android 上【开任何 socket(含 127.0.0.1)】都要这个权限。
+         我们的架构是"App 只做毫秒级转发,推理在 root 守护里",
+         App 侧要连 127.0.0.1:<port> ⇒ 【缺了它 ping() 永远失败】
+         (实测踩过:守护明明 LISTENING,App 却报"守护不在")。
+         ⚠️ 只连 loopback,不对外通信。 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 🔬 路 A 验证用:不可见 overlay 试探"前台可见性能否免冻"。
+         ⚠️ 若验证成功,这套机制可能成为【不依赖 root】的正式方案;
+            若失败,则保留 root 守护为唯一路。
+         ⚠️ 这是特殊权限,需用户/ADB 显式授予(appops set ... SYSTEM_ALERT_WINDOW allow)。 -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- ⚠️ Android 14+ (SDK 34+):startForeground 必须声明【类型】并持有对应权限,
+         否则抛 MissingForegroundServiceTypeException / SecurityException。
+         我们只在【合成期间】进前台(防 ColorOS 的 cgroup freezer),类型用 mediaPlayback
+         (我们在产出音频;没有更贴切的类型)。 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
+    <application
+        android:label="@string/app_name"
+        android:allowBackup="false"
+        android:extractNativeLibs="true">
+
+        <!-- ⚠️ 注意:本 APK【不含模型】(684MB 塞不进来)。
+             模型由 install.sh 推到 App 私有目录;见 ../README.md -->
+        <!-- 主界面(极简原生 Java)。⚠️ 同时作为 LAUNCHER,这样点图标就能用 -->
+        <!-- ⚠️ configChanges 含 uiMode ⇒ 系统深色主题切换时【不重建】而是回调
+             onConfigurationChanged,便于我们跟着换配色(Nija 2026-09-26 要求暗黑模式) -->
+        <activity
+            android:name="canto.CantoMainActivity"
+            android:exported="true"
+            android:configChanges="uiMode|orientation|screenSize|keyboardHidden"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 引擎的"设置页"(tts_engine.xml 的 settingsActivity 指向它)
+             ⚠️ 必须声明,否则点齿轮会 ActivityNotFoundException;
+                某些 ROM 在绑定时就解析它 ⇒ 可能直接拒绝绑定 -->
+        <activity
+            android:name="canto.CantoSettingsActivity"
+            android:exported="true"
+            android:label="@string/app_name" />
+
+        <service
+            android:name="canto.CantoTtsService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_TEXT_TO_SPEECH_ENGINE">
+            <intent-filter>
+                <action android:name="android.intent.action.TTS_SERVICE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.speech.tts"
+                android:resource="@xml/tts_engine" />
+        </service>
+    </application>
+</manifest>

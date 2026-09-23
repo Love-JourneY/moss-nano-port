@@ -1,0 +1,103 @@
+#!/bin/sh
+# ══════════════════════════════════════════════════════════════════════
+# dsh-tts —— 平板本地朗读服务(:8790)控制脚本(init.d 风格)
+# ══════════════════════════════════════════════════════════════════════
+# 【它是什么 / 为什么需要】
+#   DSH 界面上的 🔊 按钮(插件 dsh-tts 的 client.js)点下去会先:
+#       POST http://127.0.0.1:8790/speak  {"text": "..."}
+#   本服务收到后调 /usr/local/bin/vsay ⇒ canto-tts 粤语【男声】⇒ Android 出声。
+#   ⚠️ 关键:服务不在时,客户端会【静默】退回浏览器 speechSynthesis(落到 Android
+#      系统 TTS 引擎)—— 用户完全分不出"没装"和"没跑"。所以这个服务必须开机就在。
+#
+# 【为什么放 init.d 而不是把逻辑塞进 p2p-services】
+#   与同机的 dsh-mesh / port-gate 同构:一个模块 = 一个脚本 + 一条注册。
+#   p2p-services 只在 start/stop/status 里各加一行调用,不掺业务逻辑。
+#   注册链路:/data/adb/service.d/p2p-chroot.sh(开机)
+#             → p2p-services start → /etc/init.d/dsh-tts start
+#
+# ⚠️ 环境要点(踩过,别删):
+#   1. Android 的 TMPDIR=/data/local/tmp 会被隐式带进 chroot,而该目录在 chroot 里
+#      【不存在】⇒ 这里显式 TMPDIR=/tmp(与 /etc/profile.d/canto-tts.sh 一致)。
+#   2. node 在 /opt/node-v24.9.0/bin,不是 $PATH 默认值 ⇒ 必须显式写进 PATH。
+#   3. /run 在 **chroot 内**存在且可写 ⇒ pid 放 /run 符合 FHS。
+#      (纪律里"这台 Android 没有 /run"说的是 **Android 侧**;chroot 侧有。)
+set -u
+
+# ⚠️ 必须自己兜底 PATH（踩过，别删）：
+#   本脚本由 p2p-services → p2p-chroot.sh run 一路调用下来，**不是登录 shell**，
+#   /etc/profile.d 一律不生效。实测：不设 PATH 时 rm/sleep/sed/awk/bash 全部 "not found"
+#   ⇒ 服务其实起来了（setsid 用的是绝对路径 $NODEBIN），但脚本自己判不出来、还报"启动失败"。
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+
+PORT=${DSH_TTS_PORT:-8790}
+LOG=/var/log/dsh-tts.log
+PIDF=/run/dsh-tts.pid
+SERVER=/opt/dsh/dsh-tts/server.js
+NODEBIN=/opt/node-v24.9.0/bin/node
+
+# 端口探活:零依赖方案(trixie-slim 没有 ss/iproute2)。
+# ① 读 /proc/net/tcp:必须同时校验【本地地址列】+【状态列 == 0A(LISTEN)】——
+#    只看端口号会把 TIME_WAIT/FIN_WAIT 残留误判成"还在监听"(p2p-services 踩过)。
+# ② 退回 /dev/tcp 直连(最可靠)。
+is_up() {
+  _hex=$(printf '%04X' "$PORT" 2>/dev/null)
+  [ -n "$_hex" ] && awk -v p=":$_hex" \
+      '$2 ~ p"$" && $4 == "0A" {f=1} END{exit !f}' \
+      /proc/net/tcp /proc/net/tcp6 2>/dev/null && return 0
+  bash -c "exec 3<>/dev/tcp/127.0.0.1/$PORT" 2>/dev/null && return 0
+  return 1
+}
+
+start_it() {
+  [ -x "$NODEBIN" ] || { echo "  ⬜ dsh-tts 跳过:node 不存在($NODEBIN)"; return 0; }
+  [ -f "$SERVER" ]  || { echo "  ⬜ dsh-tts 跳过:服务端不存在($SERVER)"; return 0; }
+  if is_up; then echo "  dsh-tts 已在 :$PORT 监听"; return 0; fi
+
+  rm -f "$PIDF"     # 清掉可能残留的僵死 pid 文件(幂等)
+  (
+    export HOME=/root DSH_HOME=/root/.dsh TMPDIR=/tmp \
+           PATH=/opt/node-v24.9.0/bin:/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+    # setsid ⇒ 脱离 p2p-services 的进程组,后者退出时不会把它带走
+    setsid "$NODEBIN" "$SERVER" --port "$PORT" >"$LOG" 2>&1 &
+    echo $! > "$PIDF"
+  )
+  sleep 1
+  if is_up; then
+    echo "  ✅ dsh-tts 启动 :$PORT(DSH 🔊 → canto-tts 粤语男声)"
+  else
+    echo "  ❌ dsh-tts 启动失败:"
+    tail -5 "$LOG" 2>/dev/null | sed 's/^/     /'
+  fi
+}
+
+stop_it() {
+  _stopped=0
+  if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF" 2>/dev/null)" 2>/dev/null; then
+    kill "$(cat "$PIDF")" 2>/dev/null && _stopped=1
+  fi
+  # 兜底:pid 文件丢了/过期了也要能停。
+  # ⚠️ 用「括号模式」避免 pgrep 匹配到**自己**(本脚本的 cmdline 里不会有 'dsh-tts/server.js'
+  #    这个连写串,但保险起见仍用 [d] 技巧 —— lessons 23 的教训)。
+  for _p in $(pgrep -f '[d]sh-tts/server\.js' 2>/dev/null); do
+    kill "$_p" 2>/dev/null && _stopped=1
+  done
+  rm -f "$PIDF"
+  [ "$_stopped" = 1 ] && echo "  dsh-tts 已停" || echo "  dsh-tts 未运行"
+}
+
+case "${1:-}" in
+  start)   start_it ;;
+  stop)    stop_it ;;
+  restart) stop_it; sleep 1; start_it ;;
+  status)
+    if is_up; then
+      echo "  ✅ dsh-tts :$PORT(DSH 🔊 已接通 canto-tts)"
+      if [ -f "$PIDF" ]; then echo "     pid=$(cat "$PIDF")"; fi
+      echo -n "     health: "; curl -s -m 3 "http://127.0.0.1:$PORT/health" 2>/dev/null || echo "(curl 不可用)"
+      echo
+    else
+      echo "  ⬜ dsh-tts :$PORT(未运行 ⇒ 平板点 🔊 会静默退回浏览器/系统 TTS)"
+    fi
+    ;;
+  *) echo "用法: $0 {start|stop|restart|status}"; exit 2 ;;
+esac

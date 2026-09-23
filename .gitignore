@@ -1,0 +1,25 @@
+# 大文件不入库(用 dist/ 或外部归档;遵循"整包可迁移"但别把 1.5G 塞进 git)
+/models/
+/pkg/
+/dist/
+/backups/
+*.tar.zst
+*.tar.bz2
+
+# 运行产物
+__pycache__/
+*.pyc
+*.log
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 用户私有
+*.local
+
+# ★ 本机专属(含设备 MAC / 网络信息)—— 2026-09-28 开源准备
+device.mac
+android/device.mac
+*.local.md

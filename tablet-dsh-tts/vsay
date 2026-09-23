@@ -1,0 +1,298 @@
+#!/bin/bash
+# vsay —— 格仔(平板)语音播报派发器(粤语)
+#
+# ══════════════════════════════════════════════════════════════════════
+# 2026-09-22 格仔版:自黑仔 /usr/local/bin/vsay 移植 + 【平板播放路径适配】
+# ══════════════════════════════════════════════════════════════════════
+# 【本版与黑仔版的唯一实质差异 = 怎么出声】
+#   黑仔 :vsay-canto 合成完直接 paplay/pw-play 出声(桌面有 PipeWire)。
+#   格仔 :chroot 里【没有任何】本地播放器能出声 —— Android 音频 HAL 独占 /dev/snd
+#         (pacat / paplay / pw-play / aplay / tinyplay 已逐条实测否掉)。
+#         唯一通路 = Android 侧 SpeakTriggerActivity(Theme.NoDisplay,不创建 window)。
+#   ⇒ 本版把「合成」与「播放」拆成两步(只在本机这么做):
+#        ① vsay-canto / vsay-canto-female  -o <单文件>   ⇒ 只合成,并【拼接成一个 wav】
+#        ② vsay-android-play <单文件>                    ⇒ 一次交给 Android 播放
+#
+#   ⚠️⚠️ 为什么必须【先拼成单文件】再播(踩过,别改成逐段盲播):
+#        SpeakTriggerActivity **一次只吃一个 wav**(女声源码 line 1122 明载),
+#        且 App 播放器是【单例】—— 新的 am start 会【打断】旧的(不再是排队)。
+#        ⇒ 若按段【不加排程地】逐个 `am start`,后一段会掐掉前一段 ⇒ 用户只听到最后一段。
+#
+#   ★ 2026-09-22 晚 更新:已改成「接力」—— 但上面那条仍然是【前提】,
+#     接力不是"逐段盲播",而是【按 wav 头的精确帧数排程】:
+#        第一批(第一段)一合成好就出声 → 由 vsay-android-relay 记录它的精确时长 →
+#        在该批【音频刚播完 +0.2s】时才发起下一次 am start(此时旧批已 PLAY_DONE)。
+#     实测 logcat 判据:cancelled=false 且 framesWritten==framesPlayed(= 一个样本都没被切)。
+#     长文本仍会被【合并成一批】播(等待期间合成好的段全收进同一批)⇒ 批内完全无缝。
+#
+# 【为什么在 dispatcher 做,而不是改 vsay-canto】
+#   vsay-canto 与黑仔【字节一致】(md5 8071d81b),不改它就不产生分叉 / 不引入实现漂移。
+#   dispatcher 本来就是"决定怎么出声"的那一层,平板适配放这里最合适。
+#
+# ⚠️ 兼容性契约(与黑仔同,别改坏):DSH 的 🔊 按钮经 dsh-tts/server.js 调用本脚本,
+#    命令是 `vsay -m zhll <正文>`(server.js 里写死 ['-m', MODEL, text])。
+#    **本版必须吃掉 -m/--model 及其参数**(忽略其值,只作兼容),绝不并入朗读文本 ——
+#    否则每句话都会被念出"m zhll"前缀(黑仔 2026-09-22 实测踩过)。
+#
+# ⚠️ 环境纪律(平板专属,踩过,别删):
+#   1. 【必须显式 export PATH】。DSH / p2p-services 启动的进程【没有登录 shell】,
+#      /etc/profile.d 一律不生效 ⇒ 不写 PATH 的话 vpunct/date/mktemp/python3 全找不到。
+#   2. 【必须显式 export TMPDIR=/tmp】。Android 会把 TMPDIR=/data/local/tmp 隐式带进
+#      chroot,而**那个目录在 chroot 里不存在** ⇒ mktemp 会失败、临时文件落到虚空。
+#      /etc/profile.d/canto-tts.sh 里那条只覆盖登录 shell,救不了 DSH 这条非登录调用。
+#      ⇒ 这里是真正兜底的那一处。
+#
+# 用法:
+#   vsay "想講嘅嘢"                # 默认 = canto-tts 粤语【男声】
+#   vsay -n "..."                  # 不补标点
+#   vsay -e female "..."           # canto-tts 粤语女声(音色默认 cv03,可用 VSAY_FEMALE_VOICE 换)
+#   vsay -e qwen3 "..."            # 🔴 已退役 ⇒ 明确报错 exit 3(见下)
+#   vsay -m zhll "..."             # 兼容 dsh-tts;-m 被吃掉、忽略
+#   echo "..." | vsay              # 从管道进
+#
+# ⚠️ 2026-09-22 qwen3-tts(2.2GB)已【退役归档】⇒ **canto-tts 成为唯一模型**。
+#    · 回退链已改:canto 缺 ⇒ 退 female;female 缺 ⇒ 退 canto;
+#      两条都缺 ⇒ 【明确报错 exit 1】(不回退到已归档的引擎 —— 那等于保证失败)
+#    · `-e qwen3` ⇒ 【明确报错 exit 3】(不静默、不偷偷换音色)
+#    · 平板 chroot 里**根本没有** qwen3 模型/CLI(实测),旧回退本来就是死代码。
+#    · 归档说明:~/Documents/repo/voice-tts/retired/qwen3-tts/README.md
+#
+# 环境变量:
+#   VSAY_ENGINE         canto(默认) | female        (qwen3 已退役 ⇒ 传它会报错)
+#   VSAY_FEMALE_VOICE   女声音色(留空 = 用 vsay-canto-female 自己的默认 cv03)
+#   VSAY_PUNCT          0 = 不补标点(等价 -n)
+#   VSAY_KEEP_TMP       1 = 保留合成出的临时 wav(调试用;默认播完即删,零残留)
+set -uo pipefail
+
+# ── 0. 环境兜底(必须在任何外部命令之前)────────────────────────────────
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+export TMPDIR=/tmp          # 覆盖 Android 隐式带进来的 /data/local/tmp(见文件头)
+
+ENGINE="${VSAY_ENGINE:-canto}"
+PUNCT="${VSAY_PUNCT:-1}"
+
+# ── 1. 参数解析 ──────────────────────────────────────────────────────
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -n|--no-punct) PUNCT=0; shift;;
+    -e|--engine)   ENGINE="${2:-}"; shift 2;;
+    # ⚠️ dsh-tts 的遗留参数:吃掉它,别让它变成朗读内容(见文件头「兼容性契约」)。
+    #    必须容忍"-m 是最后一个参数"(没有值)的情况,否则 shift 2 会失败退出。
+    -m|--model)    if [ $# -ge 2 ]; then shift 2; else shift; fi;;
+    --)            shift; break;;
+    -h|--help)     sed -n '2,55p' "$0" | sed 's/^# \?//'; exit 0;;
+    *) break;;
+  esac
+done
+
+if [ $# -gt 0 ]; then TXT="$*"; else TXT="$(cat)"; fi
+[ -n "${TXT// /}" ] || exit 0
+
+# ── 2. 补标点(给 TTS 加停顿,朗读才有断句感)──────────────────────────
+# ⚠️ 格仔上【没有装 vpunct】(黑仔装了)⇒ 必须先判存在再调。
+#    不判的话:每句话都会往 stderr 喷 "vpunct: command not found" —— 不致命,
+#    但脏,而且会掩盖真正的错误信息(用户/agent 会更难排查)。
+if [ "$PUNCT" = "1" ] && command -v vpunct >/dev/null 2>&1; then
+  OUT=$(printf '%s' "$TXT" | timeout 60 vpunct 2>/dev/null)
+  [ -n "$OUT" ] && TXT="$OUT"
+fi
+
+# ── 2.5 普 → 粤(p2y)—— 黑仔 /usr/local/bin/vsay 同名段落,两台机行为必须一致 ──
+# 依据:Nija 实测判定 ——「粤语模型 + 粤语文本」才地道;
+#       「粤语模型 + 【普通话书面文】」= 半咸淡。而 DSH 的回复就是普通话书面文。
+#
+# ⚠️ 为什么放在【dispatcher】而不是改 vsay-canto:
+#    vsay-canto 与黑仔【字节一致】(md5 8071d81b)是硬约束 ⇒ 改它就分叉。
+#    dispatcher 本来就是"决定怎么念"的那一层。
+# ⚠️ 为什么放在【补标点之后】:p2y 的「句末『了』→『喇』」要靠标点判句末。
+#    (格仔上没装 vpunct ⇒ 这段直接跑在原文上,句末靠串尾哨兵判,一样对。)
+# ⚠️ 为什么放在【切段之前】:切段在 vsay-canto/relay 内部,本步在它之前完成
+#    ⇒「喇/啦/咩」这些语气词能参与断句。转换后长度会变,但切段是
+#      "句号优先 + 按字数定长",对长度变化天然适应。
+# 开关(默认开):VSAY_P2Y=0 或 VSAY_CANTO_P2Y=0 ⇒ 关闭
+P2Y_ON="${VSAY_P2Y:-${VSAY_CANTO_P2Y:-1}}"
+if [ "$P2Y_ON" != "0" ] && [ -n "${TXT// /}" ]; then
+  # ⚠️ 优先读开发场(黑仔);格仔没有开发场 ⇒ 回落到 PATH 里的 /usr/local/bin/p2y
+  P2Y_BIN="$HOME/Documents/repo/voice-tts/backend/p2y.py"
+  [ -f "$P2Y_BIN" ] || P2Y_BIN="$(command -v p2y 2>/dev/null || true)"
+  if [ -n "$P2Y_BIN" ]; then
+    Y="$(printf '%s' "$TXT" | timeout 20 python3 "$P2Y_BIN" 2>/dev/null)"
+    [ -n "${Y// /}" ] && TXT="$Y"
+  fi
+fi
+
+# ── 3. 用量记账(格式与黑仔一致,便于两台机对照)────────────────────────
+# 为什么要记:DSH 的日志只记 `model=zhll`(那是 dsh-tts 自己的参数),区分不出真正走的引擎。
+# 失败绝不影响朗读。
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}"
+mkdir -p "$STATE" 2>/dev/null
+printf '%s\tvsay→%s\t%s\n' "$(date '+%F %T')" "${ENGINE:-canto}" "${TXT:0:24}" \
+  >> "$STATE/vsay-usage.log" 2>/dev/null || true
+
+# ── 4. 播放路径探测 ──────────────────────────────────────────────────
+# 判据:① 有本机专属播放桥 vsay-android-play  ② App 私有共享目录在。
+# 两条都满足 ⇒ 平板模式:合成到单文件 + 交给 Android。
+# 否则 ⇒ 黑仔模式:直接 exec 引擎,让引擎自己出声(纯 Linux 桌面/其他机器)。
+ANDROID_PLAY=/usr/local/bin/vsay-android-play
+ANDROID_DIR=/android/data/media/0/Android/data/com.fcitx5sensevoice/files
+TABLET=0
+[ -x "$ANDROID_PLAY" ] && [ -d "$ANDROID_DIR" ] && TABLET=1
+
+# ── 4.5 平板「边合成边出声」接力(2026-09-22 新增,仅格仔)──────────────
+# 【为什么】老路必须先把所有段【拼成一个单文件】才交 Android 播(因为
+#   SpeakTriggerActivity 一次只吃一个 wav)⇒ 首字延迟 = 各段合成时间之和。
+#   实测 36 字两段:合成 3.24s + 外壳 0.54s + Android 起播 0.17s = 3.91s 才出声。
+#   接力后:第一段一合成好就出声,后续段按【精确 wav 时长】排程接上。
+#
+# 【边界 · 守住 md5 一致原则】逻辑全在本文件 + 新文件 vsay-android-relay,
+#   **一个字节都不改 vsay-canto**(它仍与黑仔 md5 一致 8071d81b)。
+#   接力器走的是 vsay-canto【既有】的播放器钩子 VSAY_CANTO_PLAYER ——
+#   它本来是给桌面挑 paplay/pw-play 用的,这里正好借来当"每段到齐"的回调。
+#
+# 【只覆盖男声】女声 vsay-canto-female 是 Python 实现,没有 VSAY_CANTO_PLAYER
+#   钩子(它有自己的一套),继续走老的 --out 单文件路。不为了快一点去冒险改它。
+#
+# 【后悔药】VSAY_ANDROID_RELAY=0 ⇒ 一键退回老的"拼单文件再播"。
+RELAY=/usr/local/bin/vsay-android-relay
+RELAY_OK=0
+if [ "$TABLET" = "1" ] && [ -x "$RELAY" ] && [ "${VSAY_ANDROID_RELAY:-1}" != "0" ]; then
+  case "$ENGINE" in canto|"") RELAY_OK=1 ;; esac
+fi
+
+# 首段限长(接力专用):首字延迟 = 【第一段】的合成时间,而 vsay-canto 是
+# 【句末标点优先】切段 ⇒ DSH 正文第一句常有 30~50 字,首字就要等 2~3s。
+# 这里在第一句内【不超过 CAP 字的最后一个自然停顿】处把逗号改成句号,把首段切短。
+# ⚠️ 三条自制约束:
+#   ① 只在首句 > CAP 且 CAP 之前【确实有自然停顿】时才动手 —— 绝不硬切词;
+#   ② 只改【第一处】,其余段仍按 vsay-canto 原策略切 ⇒ 听感影响只落在一处;
+#   ③ 只动标点、一个汉字都不动;VSAY_FIRST_CAP=0 可关闭(默认 16 字)。
+if [ "$RELAY_OK" = "1" ]; then
+  FIRST_CAP="${VSAY_FIRST_CAP:-16}"
+  if [ "$FIRST_CAP" -gt 0 ] 2>/dev/null; then
+    NEWTXT="$(printf '%s' "$TXT" | python3 -c "
+import sys, re
+cap = int('$FIRST_CAP')
+t = sys.stdin.read()
+m = re.match(r'[^。！？!?]*[。！？!?]', t)
+first = m.group(0) if m else t
+if len(first) > cap:
+    # cap 之前最后一个自然停顿(全角+半角)。找不到就不动 —— 宁可慢,不硬切。
+    idx = max(first.rfind(c, 0, cap + 1) for c in '，、；：,;')
+    if idx > 0:
+        t = t[:idx] + '。' + t[idx+1:]
+sys.stdout.write(t)
+" 2>/dev/null)"
+    [ -n "$NEWTXT" ] && TXT="$NEWTXT"
+  fi
+fi
+
+# run_engine <引擎可执行文件> <输出参数名|->
+#   平板模式:先 `-o/--out <单文件>` 合成,再交 Android 播一次,播完删临时文件。
+#   黑仔模式:exec 引擎(由引擎自己挑播放器出声)。
+run_engine() {
+  local bin="$1" outflag="${2:--}"
+
+  if [ "$TABLET" = "1" ] && [ "$outflag" != "-" ]; then
+    local wav
+    # ⚠️ mktemp 不预创建文件(mktemp -u 有竞态;这里先建再删,既避开竞态又让
+    #    引擎能自己创建目标文件 —— 引擎对已存在文件的行为不一定可控)。
+    wav="$(mktemp /tmp/vsay-XXXXXX.wav)" || {
+      echo "vsay: 建临时文件失败(TMPDIR=$TMPDIR)" >&2; return 1; }
+    rm -f "$wav"
+
+    if ! "$bin" "$outflag" "$wav" "$TXT"; then
+      echo "vsay: 合成失败($bin $outflag)" >&2
+      rm -f "$wav"
+      return 1
+    fi
+    if [ ! -s "$wav" ]; then
+      echo "vsay: 合成没有产出 wav($bin $outflag)" >&2
+      rm -f "$wav"
+      return 1
+    fi
+
+    "$ANDROID_PLAY" "$wav"
+    local rc=$?
+    # ⚠️ 播完立刻删:零残留。am start 是异步的,但 SpeakTriggerActivity 在 PLAY_START
+    #    之前就已把整个 wav 解析进内存(TTS_PLAYER_WAV_PARSED 打出 frames/bytes),
+    #    所以删文件不会切掉音频。真要留证据时用 VSAY_KEEP_TMP=1。
+    [ "${VSAY_KEEP_TMP:-0}" = "1" ] || rm -f "$wav"
+    return $rc
+  fi
+
+  # 黑仔模式:直接交给引擎,由它自己出声
+  exec "$bin" "$TXT"
+}
+
+# run_engine_relay <引擎可执行文件>
+#   平板接力:不拼单文件,由 vsay-canto 每段调用接力器出声(见 vsay-android-relay 文件头)。
+#   ⚠️ 绝不能传 -o/--out:传了就是 PLAY=0,vsay-canto 根本不会调 VSAY_CANTO_PLAYER 钩子,
+#      接力器一次都不会被触发 ⇒ 变成"合成完没声"。这是本函数唯一容易踩的坑。
+run_engine_relay() {
+  VSAY_CANTO_PLAYER="$RELAY" "$1" "$TXT"
+}
+
+# ── 5. 派发(每条路都有回退,绝不"静默没声")────────────────────────────
+case "$ENGINE" in
+  canto|"")
+    # 默认:canto-tts 粤语【男声】(就是用户要的那个)
+    if [ -x /usr/local/bin/vsay-canto ]; then
+      # ★ 平板优先走接力(首字 3.91s → ~1.2s);接力器缺失或被 VSAY_ANDROID_RELAY=0
+      #   关掉时 RELAY_OK=0,自动落回下面那条【已验收的】老路 —— 不存在"改坏就没声"。
+      if [ "$RELAY_OK" = "1" ]; then
+        run_engine_relay /usr/local/bin/vsay-canto
+        exit $?
+      fi
+      run_engine /usr/local/bin/vsay-canto -o
+      exit $?
+    fi
+    # ⚠️ 2026-09-22 qwen3 退役后:回退目标改成 canto【女声】——
+    #    同一个 canto-tts 模型、同一条粤语发音路径,只换音色 codes
+    #    ⇒ 这才是真正的优雅降级。旧代码回退到 vsay-yue,而那条命令已归档、
+    #      且平板上【从来就没有】qwen3 模型/CLI ⇒ 旧回退是"保证失败"的死代码。
+    if [ -x /usr/local/bin/vsay-canto-female ]; then
+      echo "vsay: 缺 /usr/local/bin/vsay-canto ⇒ 回退 canto 女声(同模型,仅换音色)" >&2
+      run_engine /usr/local/bin/vsay-canto-female --out
+      exit $?
+    fi
+    echo "vsay: 错误 —— canto-tts 两条线都不可用(vsay-canto / vsay-canto-female 均缺失)" >&2
+    echo "      本机唯一的 TTS 引擎就是 canto-tts;请先恢复它" >&2
+    exit 1
+    ;;
+  qwen3|yue)
+    # 🔴 2026-09-22:qwen3-tts(2.2GB)已【退役归档】。
+    #    ⚠️ 这里【故意硬报错】而不是偷偷回退到 canto:调用方显式点名了引擎,
+    #       给别的音色 = 撒谎,且会让"qwen3 还能用"的错觉长期存活。
+    #    ⚠️ exit 3 是专用退出码(1=无引擎 / 2=未知引擎),方便脚本识别
+    #       "这是退役引擎,不是环境坏了"。
+    echo "vsay: 🔴 引擎 'qwen3' 已于 2026-09-22 退役归档,不再可用。" >&2
+    echo "      原因:模型 2.2GB,生产环境用不起;canto-tts 已是唯一模型。" >&2
+    echo "      改用 :vsay \"...\"(男声)  或  vsay -e female \"...\"(女声)" >&2
+    exit 3
+    ;;
+  female|f)
+    # canto-tts 粤语女声(同一模型,只换音色 codes)
+    # ⚠️ 不在这里写死 VSAY_FEMALE_VOICE 默认值 —— 留空时用 vsay-canto-female
+    #    自己的默认(cv03,Nija 2026-09-22 试听后选定)。写死会把它盖掉。
+    if [ -x /usr/local/bin/vsay-canto-female ]; then
+      run_engine /usr/local/bin/vsay-canto-female --out
+      exit $?
+    fi
+    # ⚠️ 2026-09-22 qwen3 退役后:回退目标改成 canto【男声】(同一模型)。
+    #    这会让音色变化(性别变了),所以【先明确告知】再降级 ——
+    #    让调用方在日志里能看到发生了什么,而不是"声音怎么不一样了"却查不到原因。
+    if [ -x /usr/local/bin/vsay-canto ]; then
+      echo "vsay: 缺 /usr/local/bin/vsay-canto-female ⇒ 回退 canto 男声(同模型,音色会变)" >&2
+      run_engine /usr/local/bin/vsay-canto -o
+      exit $?
+    fi
+    echo "vsay: 错误 —— canto-tts 两条线都不可用(vsay-canto-female / vsay-canto 均缺失)" >&2
+    echo "      本机唯一的 TTS 引擎就是 canto-tts;请先恢复它" >&2
+    exit 1
+    ;;
+  *)
+    echo "vsay: 未知引擎 '$ENGINE'(可用:canto | female)" >&2
+    echo "      ⚠️ 'qwen3' 曾是可选项,已于 2026-09-22 退役归档。" >&2
+    exit 2
+    ;;
+esac

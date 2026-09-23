@@ -1,0 +1,484 @@
+#!/bin/bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026  Nija (bubu12) and contributors
+# canto-tts module —— 自有代码,AGPL-3.0-or-later(全文见 ./LICENSE;第三方见 ./NOTICE)
+# ---------------------------------------------------------------------------
+# vsay-canto —— 粤语播报(canto-tts-nano·男声)
+#
+# 语义与 vsay-yue 对齐:文本从参数或 stdin 进来,合成后立刻播出。
+#
+# ⚠️⚠️ 事实澄清(别误解):本命令是【多一个男声选择】,不是"提升音色"。
+#   · canto-tts 是【男声】:实测 F0 中位 102.3Hz(男声范围 85~155Hz)
+#   · 平板原来那个 110MB sherpa VITS 是【女声】:234.6Hz —— 已于 2026-09-22 退役
+#     (女声补位见 ~/dev/female-canto-tts/,与本模块共用同一份权重)
+#   · canto-tts【只有一个固化音色,不能选】—— README 原话:
+#     「單一 default voice —— ONNX 路線暫時未支援 voice cloning、冇 voice 揀」
+#
+# ══════════════════════════════════════════════════════════════════════
+# 2026-09-22 落位 4 倍加速(tts_stream.py)—— 真凶与修法
+# ══════════════════════════════════════════════════════════════════════
+# 真凶:旧版每段各起一个 `canto-tts synthesize` **新进程** ⇒ 8 个 ONNX session
+#       被反复从磁盘重载。实测单段独立进程 ~4.5s、同进程内第 2 段只 ~1s ⇒
+#       **76% 的时间花在重复加载,不是推理。**
+#
+# 修法:三级回退(快 → 慢 → 兜底),**任何一级失败都自动降级,绝不静默失败**:
+#   L1 常驻守护(tts_stream.py --serve/--client)  模型只加载一次  ⇒ 实测 3.5~4.3x
+#   L2 一次性   (tts_stream.py --outdir)         单次加载多段    ⇒ 实测 ~1.45x
+#   L3 旧逐段 CLI(原逻辑)                        每段重载        ⇒ 1.0x(与旧版等价)
+#
+# ⚠️ L1 的代价:守护常驻 RSS ≈ 1.5 GiB(模型 729MB + ORT 工作区)。
+#    所以默认带 `--idle-timeout`(VSAY_CANTO_IDLE,默认 300s)——
+#    空闲 5 分钟自动退出、把内存还回去,下次调用再冷启(约 3.6s)。
+#    「默认不常驻」这条原型原则仍然成立:是【惰性拉起 + 空闲自退】,不是开机常驻。
+#
+# ⚠️ L1 也保证"边合成边播":client 每段一请求一应答,收到 SEG 行就立刻播,
+#    不等整批合成完(旧版早就修过这个坑:3000 字等 20 分钟才出声)。
+#    L2 做不到边合成边播,所以它只是 L1 不可用时的次选。
+#
+# 用法:
+#   vsay-canto "今日天氣幾好。"          # 直接给文本
+#   echo "多謝晒。" | vsay-canto         # 从管道进来
+#   vsay-canto -o out.wav "..."          # 只存文件,不播
+#   vsay-canto -n "..."                  # 合成但不播(等价 --no-play)
+#   vsay-canto --no-daemon "..."          # 诊断用:强制走 L2/L3,不碰守护
+#
+# 环境变量:
+#   VSAY_CANTO_MODEL   模型目录(默认 /var/lib/canto-tts/model)
+#   VSAY_CANTO_VENV    venv 目录(默认 /opt/canto-tts-venv)
+#   VSAY_CANTO_CHUNK   每段最大字数(默认 50;nano 模型对长文本会漂,切段更稳)
+#   VSAY_CANTO_MAXTOTAL 限制总字数(0=不限)
+#   VSAY_CANTO_DEADLINE 总时长上限秒数(默认 180,防超长请求啃 CPU)
+#   VSAY_CANTO_PLAYER  强制指定播放器(默认自动探测 paplay/pw-play/aplay)
+#   VSAY_CANTO_KEEP    非空则保留临时目录(调试用)
+#   VSAY_CANTO_TMPDIR  临时目录根(默认 /tmp;无 /tmp 的机器可指到别处)
+#   VSAY_CANTO_DAEMON  0 = 禁用常驻守护(只用 L2/L3)
+#   VSAY_CANTO_STREAM  tts_stream.py 的路径(默认 /opt/canto-tts/lib/tts_stream.py)
+#   VSAY_CANTO_SOCK    守护 socket 路径(默认 $XDG_RUNTIME_DIR/canto-tts.sock)
+#   VSAY_CANTO_IDLE    守护空闲自动退出秒数(默认 300;0=永不退出)
+set -uo pipefail
+
+MODEL="${VSAY_CANTO_MODEL:-/var/lib/canto-tts/model}"
+VENV="${VSAY_CANTO_VENV:-/opt/canto-tts-venv}"
+CHUNK="${VSAY_CANTO_CHUNK:-50}"
+MAXTOTAL="${VSAY_CANTO_MAXTOTAL:-0}"
+DEADLINE_S="${VSAY_CANTO_DEADLINE:-180}"
+# ⚠️ 优先用【安装位】的 tts_stream.py;退回开发场(免 root 就能改它调试)。
+STREAM="${VSAY_CANTO_STREAM:-/opt/canto-tts/lib/tts_stream.py}"
+[ -f "$STREAM" ] || STREAM="$HOME/Documents/repo/canto-tts/lib/tts_stream.py"
+# ⚠️ socket 放 $XDG_RUNTIME_DIR(tmpfs,重启即清,不会留陈旧文件)。
+#    ⚠️ Android 没有 /run ⇒ 那边由 VSAY_CANTO_SOCK 显式指到 /data/local/linux/。
+RUNDIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+[ -d "$RUNDIR" ] || RUNDIR="${TMPDIR:-/tmp}"
+SOCK="${VSAY_CANTO_SOCK:-$RUNDIR/canto-tts.sock}"
+IDLE="${VSAY_CANTO_IDLE:-300}"
+USE_DAEMON="${VSAY_CANTO_DAEMON:-1}"
+
+OUT=""; PLAY=1
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -o|--out)   OUT="${2:-}"; PLAY=0; shift 2;;
+    -n|--no-play) PLAY=0; shift;;
+    --no-daemon)  USE_DAEMON=0; shift;;
+    # ★ 2026-09-22 晚 加:只确保守护在跑,不合成、不播放,然后退出。
+    #   为什么:女声(vsay-canto-female,Python)也要常驻守护。与其在 Python 里
+    #   再抄一份 flock/双重检查/僵尸自愈,不如让【本文件成为唯一实现】,
+    #   女声那边只要 `vsay-canto --ensure-daemon` 一下就行 —— 消除实现漂移。
+    --ensure-daemon) ENSURE_ONLY=1; shift;;
+    -h|--help)  sed -n '2,52p' "$0" | sed 's/^# \?//'; exit 0;;
+    *) break;;
+  esac
+done
+
+if [ $# -gt 0 ]; then TXT="$*"; else TXT="$(cat)"; fi
+# ⚠️ --ensure-daemon 模式没有正文,不能因为"空文本"就提前退出
+if [ "${ENSURE_ONLY:-0}" != "1" ]; then
+  [ -n "${TXT// /}" ] || exit 0
+fi
+
+CT="$VENV/bin/canto-tts"
+PY="$VENV/bin/python"
+[ -x "$CT" ] || { echo "vsay-canto: 缺引擎 $CT(先跑 install.sh)" >&2; exit 1; }
+[ -d "$MODEL" ] || { echo "vsay-canto: 缺模型 $MODEL(先跑 install.sh)" >&2; exit 1; }
+
+[ "$MAXTOTAL" -gt 0 ] 2>/dev/null && TXT="${TXT:0:$MAXTOTAL}"
+
+# ── 播放器探测 ──
+# ⚠️ 优先级 paplay/pw-play(PipeWire/Pulse) > aplay(裸 ALSA)
+#    ⚠️⚠️ 但【光有二进制不算数】—— 2026-09-22 踩过:平板 chroot 里装了 pw-play,
+#    却没有 PipeWire 守护 ⇒ 探测"通过"、播放必失败,还看不出为什么。
+#    ⇒ 必须同时确认"服务在"(socket 存在),否则直接跳过它。
+#    找不到任何"有服务"的播放器时,如实回落到 aplay(裸 ALSA)—— 让报错来自
+#    真正尝试过硬件的那一层,而不是"命令不存在"。
+_pa_ok()  { [ -n "${PULSE_SERVER:-}" ] || ls /run/user/*/pulse/native /run/pulse/native 2>/dev/null | grep -q . ; }
+_pw_ok()  { [ -n "${PIPEWIRE_RUNTIME_DIR:-}${XDG_RUNTIME_DIR:-}" ] && ls "${PIPEWIRE_RUNTIME_DIR:-$XDG_RUNTIME_DIR}"/pipewire-0 2>/dev/null | grep -q . ; }
+pick_player() {
+  [ -n "${VSAY_CANTO_PLAYER:-}" ] && { echo "$VSAY_CANTO_PLAYER"; return; }
+  if command -v paplay >/dev/null 2>&1 && _pa_ok;  then echo paplay; return; fi
+  if command -v pw-play >/dev/null 2>&1 && _pw_ok; then echo pw-play; return; fi
+  # 兜底:有 aplay 就用 aplay;都没有再退回"存在但不一定能用"的
+  for p in aplay paplay pw-play; do
+    command -v "$p" >/dev/null 2>&1 && { echo "$p"; return; }
+  done
+  echo ""
+}
+PLAYER="$(pick_player)"
+
+# ── 临时目录 ──
+TMPROOT="${VSAY_CANTO_TMPDIR:-/tmp}"
+[ -d "$TMPROOT" ] || TMPROOT="${TMPDIR:-/tmp}"
+TMPD="$(mktemp -d "$TMPROOT/vsay-canto-XXXXXX")" || exit 1
+# ⚠️ 清理判定必须放到【退出那一刻】再做 —— 因为播放失败是跑到中途才知道的,
+#    那时才把 VSAY_CANTO_KEEP 置上(要留证据给用户)。启动时判死就会把证据删掉。
+trap '[ -n "${VSAY_CANTO_KEEP:-}" ] && { echo "[keep] $TMPD" >&2; } || rm -rf "$TMPD"' EXIT
+SEGD="$TMPD/d"; mkdir -p "$SEGD"
+
+# ── 切段 ──
+# ⚠️ 2026-09-22 改(Nija 明确要求):【句号优先】,别按逗号切碎!
+#   旧行为:在【所有】标点后切(含逗号、顿号)⇒ 一句话被切成好几段
+#     ⇒ Nija 听感:「一个字一个字吐」「像是在读课文,不像是在跟人交流」
+#   实测依据(他亲耳 A/B):整段喂 > 切段喂;而【按句号切】居中,远好于按逗号切
+#   新行为(两级):
+#     ① 先按【句末标点】切整句(。！？!?)
+#     ② 只有单句仍超 MAX 时,才下沉到【次级标点】(；;:、，,)继续切
+#     ③ 还超才硬切
+#   ⇒ 段落更长、语气更连贯,同时保留 MAX 作漂移保护
+printf '%s' "$TXT" | python3 -c "
+import sys,re
+t=sys.stdin.read().strip(); MAX=int('$CHUNK'); out=[]
+_SENT=re.compile(r'(?<=[。！？!?])')
+_SUB=re.compile(r'(?<=[；;：:、，,])')
+for sent in _SENT.split(t):
+    sent=sent.strip()
+    if not sent: continue
+    if len(sent)<=MAX:
+        out.append(sent); continue
+    for part in _SUB.split(sent):
+        part=part.strip()
+        if not part: continue
+        while len(part)>MAX:
+            out.append(part[:MAX]); part=part[MAX:]
+        if part.strip('。，、！？；：,.!?;: '): out.append(part)
+print('\n'.join(out))
+" > "$TMPD/c.txt" 2>/dev/null
+
+# python3 不可用时退化:整段一次合成(仍然能用,只是不切段)
+if [ ! -s "$TMPD/c.txt" ]; then printf '%s\n' "$TXT" > "$TMPD/c.txt"; fi
+
+DEADLINE=$(( $(date +%s) + DEADLINE_S ))
+n=$(grep -c . "$TMPD/c.txt")
+PLAYFAIL=0
+
+# ── 播放一段(三级共用,保证播放行为完全一致)──
+play_one() {
+  local f="$1" prc=0
+  [ "$PLAY" = "1" ] || return 0
+  [ -n "$PLAYER" ] || return 0
+  [ -s "$f" ] || return 0
+  case "$PLAYER" in
+    aplay) "$PLAYER" -q "$f" 2>/dev/null; prc=$? ;;
+    *)     "$PLAYER" "$f" 2>/dev/null;    prc=$? ;;
+  esac
+  if [ "$prc" -ne 0 ]; then
+    PLAYFAIL=$((PLAYFAIL+1))
+    if [ "$PLAYFAIL" = "1" ]; then
+      # ⚠️ 2026-09-22:平板 chroot 里【播不出声】——Android 的音频 HAL 独占声卡,
+      #    直接开 /dev/snd 会 write error: Invalid argument。此时不要静默失败,
+      #    要明确告诉用户"合成成功了、只是这台机器放不出来、文件在哪"。
+      echo "  [vsay-canto] ⚠️ 播放器 $PLAYER 驱动不了声卡(合成是成功的)" >&2
+      echo "  [vsay-canto]    平板 chroot 已知问题:Android 音频 HAL 独占 /dev/snd" >&2
+      echo "  [vsay-canto]    文件保留在:$SEGD/  或加 -o <路径> 自己指定" >&2
+      echo "  [vsay-canto]    详见 /opt/canto-tts/NOTES.md §7" >&2
+      # 失败时不让 trap 把证据删掉,留给用户
+      VSAY_CANTO_KEEP=1
+    fi
+    return 1
+  fi
+  return 0
+}
+
+# ══════════════════════════════════════════════════════════════════════
+# 守护探活 / 拉起 / 回收  —— 2026-09-22 晚 重写(这是 "L1 没生效" 的根因修复)
+# ══════════════════════════════════════════════════════════════════════
+# 【真凶】旧判据 `[ -S "$SOCK" ]`(socket 文件存在)= **错的**。
+#
+#   实测:守护被 kill / 并发双启时被"摘插座"之后,会留下【僵尸 socket 文件】——
+#   文件还在 ⇒ 旧判据认为"守护活着" ⇒
+#     ① 不再惰性拉起(以为已经有了)
+#     ② 每次调用都去 connect ⇒ ECONNREFUSED
+#     ⇒ 降级 L2(整模型重载 3.5s)⇒ 端到端 5.1s,而 L1 本该 2~3s。
+#   **"4.3x 优化白做了"的真凶就在这里,不是守护慢。**
+#
+#   佐证:僵尸 socket 会让 `ss -x` 也误报 —— /proc/net/unix 保留的是 socket
+#   【bind 时】的名字,文件被 unlink 后名字仍在表里 ⇒ ss 显示 LISTEN、实际连不上。
+#   ⇒ 判据必须是"能 connect 上"(listen 可探测),不是 stat(2)。
+#
+# 【并发双启】旧写法用 `flock -n`(非阻塞)串行化,拿不到锁就走"等 socket 文件出现"
+#   的分支 —— 而文件出现 ≠ 守护可服务(可能正是僵尸文件),且**双重检查缺失**:
+#   等锁期间别人起好的守护它认不出来。现在改成:阻塞拿锁 + 锁内**再探活一次**
+#   (double-checked locking),锁内探活成功就直接复用,绝不重复起。
+#
+# 【僵尸自愈】socket 陈旧时不再直接降级 L2,而是"清掉 → 重起 → 重试一次"。
+#   同时按 pid 文件回收孤儿守护(每个占 ~1.5GiB,纯浪费)。
+
+# sock_alive():能 connect 上才算活。返回 0=活 / 1=没有或连不上
+sock_alive() {
+  [ -S "$SOCK" ] || return 1
+  "$PY" - "$SOCK" <<'PYEOF' >/dev/null 2>&1
+import socket, sys
+s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+s.settimeout(1.0)
+try:
+    s.connect(sys.argv[1])
+except OSError:
+    sys.exit(1)
+finally:
+    try:
+        s.close()
+    except Exception:
+        pass
+PYEOF
+}
+
+# wait_ready():等守护就绪。单个 python 进程内部轮询 —— 避免 N 次解释器启动开销。
+# $1 = 超时秒数(默认 45;守护冷启 ~3.5s 加载 + ORT 预热)
+wait_ready() {
+  "$PY" - "$SOCK" "${1:-45}" <<'PYEOF' >/dev/null 2>&1
+import socket, sys, time
+path, timeout = sys.argv[1], float(sys.argv[2])
+deadline = time.time() + timeout
+while time.time() < deadline:
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.settimeout(0.5)
+    try:
+        s.connect(path)
+        sys.exit(0)
+    except OSError:
+        pass
+    finally:
+        try:
+            s.close()
+        except Exception:
+            pass
+    time.sleep(0.2)
+sys.exit(1)
+PYEOF
+}
+
+# cleanup_stale():清僵尸 socket + 回收孤儿守护(孤儿占 ~1.5GiB,是纯浪费)
+cleanup_stale() {
+  local pf="$SOCK.pid" op
+  if [ -f "$pf" ]; then
+    op="$(cat "$pf" 2>/dev/null)"
+    # ⚠️ 只认"确认就是那个 tts_stream 守护"的 pid —— 直接读 /proc/<pid>/cmdline,
+    #    **不用 pgrep -f / pkill -f**:那种模式可能匹配到调用者自己的命令行而杀错。
+    case "$op" in
+      ''|*[!0-9]*) : ;;
+      *)
+        if [ -r "/proc/$op/cmdline" ] && tr '\0' ' ' < "/proc/$op/cmdline" 2>/dev/null | grep -q 'tts_stream'; then
+          kill "$op" 2>/dev/null && echo "  [vsay-canto] 回收孤儿守护 pid=$op(释放约 1.5GiB)" >&2
+        fi
+        ;;
+    esac
+    rm -f "$pf"
+  fi
+  [ -S "$SOCK" ] && rm -f "$SOCK"
+  return 0
+}
+
+# start_daemon():真的把守护拉起来并等到"可服务"。调用方必须【已持有启动锁】。
+start_daemon() {
+  # ⚠️ </dev/null 必加:否则守护会继承调用者的 stdin,把管道里的正文吃掉
+  nohup "$PY" "$STREAM" --serve --sock "$SOCK" --idle-timeout "$IDLE" \
+        >"$SOCK.log" 2>&1 </dev/null &
+  local dpid=$!
+  printf '%s' "$dpid" > "$SOCK.pid" 2>/dev/null   # 记 pid ⇒ 下次能回收孤儿
+  if wait_ready 45; then return 0; fi
+  if ! kill -0 "$dpid" 2>/dev/null; then
+    echo "  [vsay-canto] 守护启动即退出(日志:$SOCK.log)" >&2
+  else
+    echo "  [vsay-canto] 守护就绪超时(日志:$SOCK.log)" >&2
+  fi
+  return 1
+}
+
+# ensure_daemon():确保有一个【真的能连上】的守护。0=可用 / 1=不可用(调用方降级 L2)
+ensure_daemon() {
+  sock_alive && return 0                       # 快路径:一次 connect,约 40ms
+
+  # socket 目录不存在/不可写 ⇒ 根本起不了守护,直接降级。
+  # 不先判这一下的话,bash 会对 `exec 9>lock` / `>log` 各喷一行 redirection 错误,
+  # 既吵又误导(看起来像崩溃,其实只是"这台机器上没这个目录")。
+  local sockdir; sockdir="$(dirname "$SOCK")"
+  [ -d "$sockdir" ] && [ -w "$sockdir" ] || return 1
+
+  local lockf="$SOCK.lock"
+  # flock 不可用(或锁文件建不出来)⇒ 退化成"探活 + 直接起",没有并发保护但功能不缺
+  if ! command -v flock >/dev/null 2>&1 || ! : >>"$lockf" 2>/dev/null; then
+    sock_alive && return 0
+    cleanup_stale
+    start_daemon
+    return $?
+  fi
+  exec 9<>"$lockf" 2>/dev/null || { cleanup_stale; start_daemon; return $?; }
+
+  # ★ 阻塞式拿锁:并发调用在这里【排队】,而不是各自去起一个守护。
+  #   旧版用 `flock -n` + "等 socket 文件出现",既漏判又误判(见文件头注释)。
+  if ! flock -w 90 9 2>/dev/null; then
+    exec 9>&- 2>/dev/null
+    echo "  [vsay-canto] 等待守护启动锁超时(90s)" >&2
+    return 1
+  fi
+  # ★★ 双重检查:等锁期间别人可能已经把守护起好了 ⇒ 直接复用,绝不再起第二个。
+  #    这正是"并发双启"的正解(旧写法缺这一段)。
+  if sock_alive; then
+    flock -u 9 2>/dev/null; exec 9>&- 2>/dev/null
+    return 0
+  fi
+  cleanup_stale
+  local rc=0
+  start_daemon || rc=1
+  flock -u 9 2>/dev/null; exec 9>&- 2>/dev/null   # 启动做完立刻放锁,别长期占着
+  return $rc
+}
+
+# ══════════════════════════════════════════════════════════════════════
+# L1:常驻守护(最快,且能"边合成边播")
+# 返回 0 = 成功;2 = 守护不可用(调用方应降级);1 = 连上了但合成出错
+# ══════════════════════════════════════════════════════════════════════
+# run_client():把段发给守护,收到 SEG 立刻播(这才是"边合成边播")。0/1/2 语义同 try_daemon
+run_client() {
+  # ⚠️ 管道里的 while 在子 shell 跑 ⇒ 状态必须落到文件,不能靠变量
+  : > "$TMPD/playfail"
+  {
+    "$PY" "$STREAM" --client --sock "$SOCK" --outdir "$SEGD" < "$TMPD/c.txt"
+    echo "__RC__ $?"
+  } 2>"$TMPD/l1.err" | while IFS= read -r line; do
+      case "$line" in
+        SEG\ *)
+          # "SEG <n> <path>" ⇒ 砍掉 "SEG " 和编号,剩下的就是路径(可能含空格)
+          f="${line#SEG }"; f="${f#* }"
+          printf '  ▶ %s\n' "$(basename "$f")" >&2
+          play_one "$f" || echo x >> "$TMPD/playfail"
+          ;;
+        ERR\ *)   printf '  [vsay-canto] %s\n' "$line" >&2;;
+        __RC__\ *) printf '%s\n' "${line#__RC__ }" > "$TMPD/l1.rc";;
+      esac
+    done
+  [ -f "$TMPD/playfail" ] && PLAYFAIL=$((PLAYFAIL + $(wc -l < "$TMPD/playfail")))
+  cat "$TMPD/l1.rc" 2>/dev/null || echo 2
+}
+
+try_daemon() {
+  [ "$USE_DAEMON" = "1" ] || return 2
+  [ -f "$STREAM" ] || return 2
+  [ -x "$PY" ] || return 2
+
+  rm -f "$TMPD/l1.rc"
+  local rc=2 tries=0
+  # 最多两轮:守护在"探活通过"和"发请求"之间死掉(或 socket 恰好变成僵尸)时,
+  # 清掉僵尸 socket 重来一次 —— 自愈,而不是直接掉进 L2 付 3.5s 重载。
+  while [ "$tries" -lt 2 ]; do
+    tries=$((tries+1))
+    if ensure_daemon; then
+      rc="$(run_client)"
+      [ "$rc" != "2" ] && break          # 0=成功 / 1=合成出错 ⇒ 都不重试
+      echo "  [vsay-canto] 守护连接失败(疑似僵尸 socket)⇒ 清理后重试" >&2
+    else
+      rc=2
+    fi
+    [ "$tries" -lt 2 ] || break
+    cleanup_stale
+  done
+
+  # ⚠️ 连接类失败(2)⇒ 返回 2 让调用方降级;合成失败(1)⇒ 如实返回 1,不重跑浪费时间
+  [ "$rc" = "0" ] && return 0
+  [ "$rc" = "2" ] && return 2
+  return 1
+}
+
+# ══════════════════════════════════════════════════════════════════════
+# L2:一次性(单次加载多段)—— 比 L3 快,但做不到边合成边播
+# ══════════════════════════════════════════════════════════════════════
+try_oneshot() {
+  [ -f "$STREAM" ] || return 1
+  [ -x "$PY" ] || return 1
+  rm -f "$SEGD"/seg-*.wav
+  timeout "$DEADLINE_S" "$PY" "$STREAM" --checkpoint "$MODEL" --outdir "$SEGD" \
+      < "$TMPD/c.txt" >"$TMPD/l2.out" 2>"$TMPD/l2.err" || return 1
+  grep -q '^DONE' "$TMPD/l2.out" || return 1
+  local f
+  for f in "$SEGD"/seg-*.wav; do
+    [ -s "$f" ] || continue
+    printf '  ▶ %s\n' "$(basename "$f")" >&2
+    play_one "$f"
+  done
+  return 0
+}
+
+# ══════════════════════════════════════════════════════════════════════
+# L3:旧逐段 CLI —— 与旧版行为一致的最后兜底(每段一个进程,慢但绝不会没有)
+# ══════════════════════════════════════════════════════════════════════
+try_legacy() {
+  local i=0 line seg
+  rm -f "$SEGD"/seg-*.wav
+  while IFS= read -r line; do
+    [ -z "${line// /}" ] && continue
+    [ "$(date +%s)" -ge "$DEADLINE" ] && { echo "  [vsay-canto] 超时,停下" >&2; break; }
+    i=$((i+1))
+    seg="$SEGD/seg-$i.wav"
+    if ! timeout 300 "$CT" synthesize "$line" -o "$seg" --checkpoint "$MODEL" >/dev/null 2>&1; then
+      echo "  [vsay-canto] 第 $i 段合成失败:${line:0:20}" >&2
+      return 1
+    fi
+    [ -s "$seg" ] || continue
+    printf '  ▶ [%d/%d] %s\n' "$i" "$n" "${line:0:20}" >&2
+    play_one "$seg"
+  done < "$TMPD/c.txt"
+  return 0
+}
+
+# ── --ensure-daemon:只把守护拉起来(女声复用入口)──
+if [ "${ENSURE_ONLY:-0}" = "1" ]; then
+  ensure_daemon && exit 0 || exit 1
+fi
+
+# ── 三级回退主流程 ──
+# ⚠️ 显式把 $? 存进变量再判,不写 `elif [ "$?" = 2 ]` —— 那种写法依赖
+#    "上一条命令的状态还没被覆盖",可读性差也易被后续插入的语句破坏。
+rc=0
+try_daemon; l1=$?
+if [ "$l1" = "0" ]; then
+  :                                   # L1 命中,什么都不用做
+elif [ "$l1" = "2" ]; then
+  echo "  [vsay-canto] 常驻守护不可用 ⇒ 降级到一次性模式(L2)" >&2
+  if try_oneshot; then
+    :                                 # L2 命中
+  else
+    echo "  [vsay-canto] 一次性模式失败 ⇒ 降级到逐段 CLI(L3,最慢)" >&2
+    try_legacy || rc=1
+  fi
+else
+  rc=1                                # L1 连上了但合成出错:如实失败,不重跑
+fi
+[ "$PLAYFAIL" -gt 0 ] && rc=1
+
+# ── 拼接输出(用 python 的 wave 模块,免 ffmpeg/sph/sox 依赖) ──
+if [ -n "$OUT" ]; then
+  "$PY" - "$OUT" "$SEGD" <<'PY' 2>/dev/null || cp "$(ls "$SEGD"/seg-*.wav 2>/dev/null | head -1)" "$OUT" 2>/dev/null
+import sys, wave, os, glob
+out, segd = sys.argv[1], sys.argv[2]
+def key(p):
+    d = ''.join(c for c in os.path.basename(p) if c.isdigit())
+    return int(d) if d else 0
+w = None
+for s in sorted(glob.glob(os.path.join(segd, "seg-*.wav")), key=key):
+    try: r = wave.open(s, "rb")
+    except Exception: continue
+    if w is None:
+        w = wave.open(out, "wb"); w.setparams(r.getparams())
+    w.writeframes(r.readframes(r.getnframes())); r.close()
+if w: w.close()
+PY
+  [ -s "$OUT" ] && echo "$OUT"
+fi
+exit $rc

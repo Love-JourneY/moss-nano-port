@@ -1,0 +1,41 @@
+[package]
+name = "canto-hk-g2p"
+version = "2.6.1"
+edition = "2021"
+rust-version = "1.65"
+description = "Fast Cantonese text-to-phoneme (G2P) converter — Jyutping with tone numbers"
+license = "Apache-2.0"
+repository = "https://github.com/typangaa/canto-hk-g2p"
+keywords = ["cantonese", "g2p", "jyutping", "tts", "nlp"]
+categories = ["text-processing"]
+readme = "README.md"
+
+[lib]
+name = "canto_g2p"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# ⚠️ 2026-09-22 改(Android 移植,我们自己的 vendored 副本,不改上游仓库):
+#   pyo3 是 CPython 绑定,Android 上没有 Python ⇒ 交叉编译会失败。
+#   而 pyo3 只在 src/lib.rs 的 PyPipeline 薄绑定层用(6 处),
+#   核心 pipeline::Pipeline 是纯 Rust ⇒ 把它改成【可选】,Android 构建时关掉。
+pyo3 = { version = "0.29", features = ["extension-module"], optional = true }
+
+memmap2 = "0.9"
+rayon = "1.10"
+
+[dev-dependencies]
+# nothing yet
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+
+# ⚠️ 2026-09-22 Android 移植(我们自己的 vendored 副本,不改上游仓库):
+#   pyo3 是 CPython 绑定,Android 上没有 Python ⇒ 交叉编译会失败。
+#   而 pyo3 只在 src/lib.rs 的 PyPipeline 薄绑定层用(6 处),
+#   核心 pipeline::Pipeline 是纯 Rust ⇒ 改成【可选】,Android 构建时 --no-default-features 关掉。
+[features]
+default = ["python"]
+python = ["dep:pyo3"]
