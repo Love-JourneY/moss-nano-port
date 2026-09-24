@@ -4,7 +4,7 @@
 # moss-nano-port module —— 自有代码,AGPL-3.0-or-later(全文见 ./LICENSE;第三方见 ./NOTICE)
 # ---------------------------------------------------------------------------
 # -*- coding: utf-8 -*-
-"""cer_eval.py —— 用【粤语 ASR】客观量 moss-nano-port 的 CER,并产出人耳 A/B 音频
+"""cer_eval.py —— 用【粤语 ASR】客观量 canto-tts 的 CER,并产出人耳 A/B 音频
 
 为什么需要它(以及它【量不出】什么):
     · "听起来地道"这句话不可证伪 ⇒ 必须有一把客观尺子。

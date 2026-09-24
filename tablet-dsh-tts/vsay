@@ -247,7 +247,7 @@ case "$ENGINE" in
       exit $?
     fi
     # ⚠️ 2026-09-22 qwen3 退役后:回退目标改成 canto【女声】——
-    #    同一个 moss-nano-port 模型、同一条粤语发音路径,只换音色 codes
+    #    同一个 canto-tts 模型、同一条粤语发音路径,只换音色 codes
     #    ⇒ 这才是真正的优雅降级。旧代码回退到 vsay-yue,而那条命令已归档、
     #      且平板上【从来就没有】qwen3 模型/CLI ⇒ 旧回退是"保证失败"的死代码。
     if [ -x /usr/local/bin/vsay-canto-female ]; then

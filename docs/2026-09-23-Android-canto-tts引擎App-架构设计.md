@@ -184,7 +184,7 @@ com.fcitx5sensevoice(现有 IME 宿主 App,AGPL-3.0)
 
 ### 4.3 粤语 G2P 怎么上 Android
 ```
-现状:canto-hk-g2p 是 0.6MB 的 Rust 库(随 moss-nano-port pip 包)
+现状:canto-hk-g2p 是 0.6MB 的 Rust 库(随 canto-tts pip 包)
 问题:Android 上跑 Rust 需要【交叉编译 .so + JNI】
 候选:
   A. 交叉编译 Rust → libcanto_hk_g2p.so + JNI 封装      ← 干净,但要 NDK 工具链
@@ -277,7 +277,7 @@ Android 15+ 由 TextToSpeechManagerPerUserService 代绑
 | 不做 | 理由 |
 |---|---|
 | **全双工(GPT Live)** | **Nija 2026-09-22 明确延后**(「以后看看有什么办法再实验设计」) |
-| **重训/微调模型** | 现有 moss-nano-port 权重够用;重训要数据 + 算力,另有路线 |
+| **重训/微调模型** | 现有 canto-tts 权重够用;重训要数据 + 算力,另有路线 |
 | **改上游 moss-nano-port 包** | 项目铁律:上游保持 clean |
 | **量化(先不做)** | 未过"音色指纹 + ASR-CER"双 gate 前不上 |
 | **上 4B/8B MOSS 大模型** | 8~16GB,平板无望(知识库 §11.2 已判) |

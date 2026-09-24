@@ -25,7 +25,7 @@
 > `tuning.properties` 的 `daemonPort` 等**均已不存在** —— 不要再按旧文操作。
 
 
-> **把 moss-nano-port 的 ONNX 推理搬进 Android 进程,注册成系统 TTS 引擎。**
+> **把 canto-tts 的 ONNX 推理搬进 Android 进程,注册成系统 TTS 引擎。**
 > **一个目录 = 全部。`cp -a` 拖到另一台机器,`./install.sh` 一条命令装好。**
 > 日期:**2026-09-24**
 
@@ -189,7 +189,7 @@ android/
 ## 许可
 
 - **本目录脚本与文档**:AGPL-3.0-or-later(见模块根 `LICENSE`)
-- **moss-nano-port 权重 / MOSS-TTS-Nano / pip 包**:Apache-2.0
+- **canto-tts 权重 / MOSS-TTS-Nano / pip 包**:Apache-2.0
 - **ONNX Runtime**:MIT
 - **canto-hk-g2p**(G2P 的 Rust 源):Apache-2.0;其数据含 **CC BY 4.0**(rime-cantonese)
 - **音色 cv03**:Common Voice 22 yue,**CC-0**

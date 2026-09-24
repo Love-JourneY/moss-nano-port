@@ -39,7 +39,7 @@
 平板现用的 `vits-cantonese-hf-xiaomaiiwn` 是**女声**(234.6Hz)。
 moss-nano-port **只有一个固化音色,不能选**(官方 README:「單一 default voice —— ONNX 路線暫時未支援 voice cloning、冇 voice 揀」)。
 ⇒ **部署它是"多一个男声选择",不是"提升音色"。**
-⇒ 但 Nija 实测后的判断是:moss-nano-port 的效果**比 2.2GB 那个大模型还好**。
+⇒ 但 Nija 实测后的判断是:canto-tts 的效果**比 2.2GB 那个大模型还好**。
 
 ---
 
@@ -783,7 +783,7 @@ qwen3 一归档,`vsay-yue` 就**不存在** ⇒ 这两条从"保命"变成"**保
 
 | 情形 | 新行为 |
 |---|---|
-| `canto` 缺失 | 回退 **`vsay-canto-female`**(同 moss-nano-port 模型、同粤语发音路径,只换音色) |
+| `canto` 缺失 | 回退 **`vsay-canto-female`**(同 canto-tts 模型、同粤语发音路径,只换音色) |
 | `female` 缺失 | 回退 **`vsay-canto`**(同上,性别互换;**先明确告知**再降级) |
 | 两条 canto 线都缺 | **明确报错 `exit 1`**(绝不静默哑掉) |
 | `vsay -e qwen3` | **明确报错 `exit 3`**(专用码:1=无引擎 / 2=未知引擎 / 3=已退役引擎) |

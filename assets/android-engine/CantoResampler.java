@@ -15,7 +15,7 @@
 //     ⇒ 砍一半(24kHz)对粤语语音**听感几乎无差**
 //
 // ⚠️⚠️ 但它【不能】提速/省内存 —— 这点必须说清楚:
-//   moss-nano-port 模型【内部就是 48kHz 生成的】⇒ 推理该算的还是算。
+//   canto-tts 模型【内部就是 48kHz 生成的】⇒ 推理该算的还是算。
 //   降采样只省:① socket 传输量 ② 播放缓冲 ③ 音频文件大小 ④ 系统 TTS 回调数据量
 //
 // ⚠️ 降采样【不能】"每两个取一个"(直接抽取)——
@@ -27,7 +27,7 @@ package canto;
 
 public final class CantoResampler {
 
-    /** 源采样率(moss-nano-port 模型固定 48kHz) */
+    /** 源采样率(canto-tts 模型固定 48kHz) */
     public static final int SRC_RATE = 48000;
 
     private CantoResampler() {}
