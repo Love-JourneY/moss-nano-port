@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026  Nija (bubu12) and contributors
 //
-// CantoTtsService —— 把 canto-tts 注册成【系统 TTS 引擎】。原生 Java。
+// CantoTtsService —— 把 moss-nano-port 注册成【系统 TTS 引擎】。原生 Java。
 //
 // ⚠️ 本类的每个"奇怪写法"都有来历(都踩过,别"优化"掉):
 //   ① onIsLanguageAvailable 里【绝不阻塞】
@@ -240,13 +240,13 @@ public class CantoTtsService extends TextToSpeechService {
         // ⚠️ 不用 lambda:Android bootclasspath 下没有 LambdaMetafactory(实测编译失败)
         new Thread(new Runnable() {
             @Override public void run() { ensureReadySafe(); }
-        }, "canto-tts-init").start();
+        }, "moss-nano-port-init").start();
     }
 
     /**
      * 后台初始化(【只做一次】)。
      * ⚠️ 实测踩过:onCreate 建一个 init 线程 + onSynthesizeText 又建
-     *    ⇒ 累积出 12 个 canto-tts-init 线程(每个都加载一遍模型!)
+     *    ⇒ 累积出 12 个 moss-nano-port-init 线程(每个都加载一遍模型!)
      * ⇒ 用 AtomicBoolean 把"初始化"收敛成一次;失败也【不重试】
      *    (模型缺失是配置问题,重试只会重复报错并吃内存)
      */
@@ -546,7 +546,7 @@ public class CantoTtsService extends TextToSpeechService {
                 exitForeground();
             }
           }
-        }, "canto-tts-synth").start();
+        }, "moss-nano-port-synth").start();
     }
 
     /**
@@ -569,7 +569,7 @@ public class CantoTtsService extends TextToSpeechService {
             android.app.Notification.Builder b = (android.os.Build.VERSION.SDK_INT >= 26)
                     ? new android.app.Notification.Builder(this, FGS_CHANNEL)
                     : new android.app.Notification.Builder(this);
-            b.setContentTitle("canto-tts")
+            b.setContentTitle("moss-nano-port")
              .setContentText("粤语合成中…")
              .setSmallIcon(android.R.drawable.ic_btn_speak_now)
              .setOngoing(true)

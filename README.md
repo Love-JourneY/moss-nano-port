@@ -1,6 +1,6 @@
-# canto-tts (moss-nano-zh-port)
+# moss-nano-port (moss-nano-port)
 
-> MOSS-TTS-Nano 的下游配套引擎 —— **对外名:`moss-nano-zh-port`** · 实现名:`canto-tts`(仓库与 Java 包名保持不变)
+> MOSS-TTS-Nano 的下游配套引擎 —— **对外名:`moss-nano-port`** · 实现名:`moss-nano-port`(仓库与 Java 包名保持不变)
 >
 > ⚠️ **非官方 · 社区项目** —— 本项目是 [OpenMOSS Team](https://github.com/OpenMOSS/MOSS-TTS)
 > (复旦大学 NLP / 上海创智学院 / 模思智能)的 **MOSS-TTS-Nano** 的【下游配套】,
@@ -57,9 +57,9 @@
 **⚠️ 最容易踩的坑**:`canto_hk_g2p`(汉字→粤拼)≠ `cantophon`(汉字→三元组)。
 详情与六条开发规则见 `NOTES.md` §14。
 
-## canto-tts for Android(2026-09-24 新增)
+## moss-nano-port for Android(2026-09-24 新增)
 
-**把同一套 canto-tts 搬进 Android 进程,注册成系统 TTS 引擎。**
+**把同一套 moss-nano-port 搬进 Android 进程,注册成系统 TTS 引擎。**
 一个目录 = 全部;`./install.sh` 一条命令;不依赖网络、不依赖大模型。
 
 ```
@@ -67,7 +67,7 @@ android/                        便携包(八条硬要求)
 ├── install.sh / verify.sh / uninstall.sh
 ├── README.md                   八条对照 + 五条实测教训
 ├── device.mac                  ⚠️ 设备寻址纪律:MAC 优先,IP 只当回退
-└── apk/canto-tts-engine.apk    12.0 MB,已签名(代码 + ORT native + 小资产)
+└── apk/moss-nano-port.apk    12.0 MB,已签名(代码 + ORT native + 小资产)
 
 assets/android-engine/          引擎源码(10 个 Java 模块 · 1500 行)
 ├── CantoOrtEngine.java         推理主循环(4 图:prefill/decode_step/采样/codec)
@@ -107,21 +107,21 @@ docs/2026-09-24-两端语音一致性.md  chroot ↔ Android 的一致性论证
 | 层次 | 内容 | 许可 |
 |---|---|---|
 | **本模块自有代码** | `install.sh` · `verify.sh` · `uninstall.sh` · `pack.sh` · `bin/` · `lib/` · `tools/` · `docs/` · 本 README | **AGPL-3.0-or-later** |
-| **上游模型/运行时** | canto-tts 权重(`canto-tts-nano-v1`)· MOSS-TTS-Nano · canto-tts pip 包 | **Apache-2.0** |
+| **上游模型/运行时** | moss-nano-port 权重(`moss-nano-port-nano-v1`)· MOSS-TTS-Nano · moss-nano-port pip 包 | **Apache-2.0** |
 | | ONNX Runtime | **MIT** |
 | **音色库参照音频** | `cv01~cv04`(Common Voice 22 yue) | **CC-0** |
 | | `qwen_hk` / `qwen_short` | **Apache-2.0** + **CC-0** 数据 |
 | 不得再分发 | `vits_clean`(旧 VITS,无 LICENSE) | **无许可** ⇒ 已删 |
 
 - **完整许可全文**:[`LICENSE`](./LICENSE)(AGPL-3.0)· **逐项第三方清单**:[`NOTICE`](./NOTICE)
-- **注意**:canto-tts 的**训练数据**作者自述「私有来源、因版权不公开」
+- **注意**:moss-nano-port 的**训练数据**作者自述「私有来源、因版权不公开」
   ⇒ 我们只按**模型卡声明的 Apache-2.0** 使用权重,**不能替上游担保训练数据的合规性**。
 - **AGPL 的含义**:衍生作品也须 AGPL;**若你把它做成网络服务,也必须提供源码**。
 
 
 ## ⚠️ 先看清一个事实:这是「多一个男声选择」,不是「提升音色」
 
-| | canto-tts 男声(本模块) | canto-tts 女声(female-canto-tts 模块) |
+| | moss-nano-port 男声(本模块) | moss-nano-port 女声(female-moss-nano-port 模块) |
 |---|---|---|
 | **性别** | **男声** | **女声** |
 | 实测 F0 中位 | **102.3 Hz**(男声范围 85~155Hz) | **约 190~205 Hz** |
@@ -130,10 +130,10 @@ docs/2026-09-24-两端语音一致性.md  chroot ↔ Android 的一致性论证
 
 > ⚠️ 2026-09-22:右列原来是平板那个 110MB sherpa-onnx VITS。
 > 它已按 Nija 令退役删除(CER 22.0%、发行包无许可声明)⇒ 女声改由**本模型 + 零样本克隆**提供
-> (同一个权重、同一套粤语发音路径,只换音色 codes)。见 `~/dev/female-canto-tts/`。
+> (同一个权重、同一套粤语发音路径,只换音色 codes)。见 `~/dev/female-moss-nano-port/`。
 > 具体型号与证据见 `NOTES.md` §旧 VITS 退役(史册)。
 
-canto-tts 官方 README 原话:
+moss-nano-port 官方 README 原话:
 
 > 「單一 default voice —— ONNX 路線暫時未支援 voice cloning、冇 voice 揀」
 
@@ -150,12 +150,12 @@ A/B 对照样本在 `~/Documents/repo/voice-tts/docs/samples/`(A=女声 / B=男�
 | **平板 格仔** | aarch64 / Debian 13 chroot | ✅ | ❌ **受限** | **11 通过 / 1 失败** |
 | **机仔 bbStation** | — | — | — | ❌ **机器不可达**(主板/电源疑似故障,无 POST) |
 
-### ⭐ 2026-09-22 晚更新:本机默认朗读已切到 canto-tts + 4x 加速落位
+### ⭐ 2026-09-22 晚更新:本机默认朗读已切到 moss-nano-port + 4x 加速落位
 
 | 事项 | 结果 |
 |---|---|
-| **默认朗读** | 笔记本 `/usr/local/bin/vsay` **默认 → canto-tts(男声)**。~~旧 qwen3 女声(2.2GB)保留但降级为可选~~ ⇒ ⚠️ **2026-09-22 更晚:qwen3 已【退役归档】,canto-tts 成为唯一模型**(见 `NOTES.md` §12.4) |
-| **4x 加速** | `/opt/canto-tts/lib/tts_stream.py` 已落位;`vsay-canto` 接上**三级回退**(L1 常驻 / L2 一次性 / L3 旧逐段) |
+| **默认朗读** | 笔记本 `/usr/local/bin/vsay` **默认 → moss-nano-port(男声)**。~~旧 qwen3 女声(2.2GB)保留但降级为可选~~ ⇒ ⚠️ **2026-09-22 更晚:qwen3 已【退役归档】,moss-nano-port 成为唯一模型**(见 `NOTES.md` §12.4) |
+| **4x 加速** | `/opt/moss-nano-port/lib/tts_stream.py` 已落位;`vsay-canto` 接上**三级回退**(L1 常驻 / L2 一次性 / L3 旧逐段) |
 | **实测提速** | 笔记本 **2 段 10751→5091 ms(2.1x 中位,最快 3.1x)**、**3 段 15619→4890 ms(3.2x 中位,最快 4.4x)** |
 | **代价** | 守护常驻 **1.62 GiB**;默认 `--idle-timeout 300s` 空闲自退,不做开机自启 |
 
@@ -186,8 +186,8 @@ Android 侧的 `tinyplay` 也打不开设备;`app_process` 在 Android 16 上直
 
 粤语(香港)文字转语音。给它中文文本,它吐一个 `.wav`。
 
-- **引擎**:`canto-tts` 0.1.4(pip 包,Apache-2.0)+ ONNX Runtime,**纯 CPU**
-- **模型**:`typangaa/canto-tts-nano`(约 729MB,已归档进本包)
+- **引擎**:`moss-nano-port` 0.1.4(pip 包,Apache-2.0)+ ONNX Runtime,**纯 CPU**
+- **模型**:`typangaa/moss-nano-port-nano`(约 729MB,已归档进本包)
 - **G2P**:`canto-hk-g2p` 2.6.1(Rust 编译的粤语字→粤拼转换,**有 aarch64 轮子**)
 - **音色**:单一男声,不可选
 - **速度**:笔记本上 2 段约 **5.1 秒**(常驻热态;旧版逐段重载是 10.8 秒)⇒ **2.1x**;
@@ -197,7 +197,7 @@ Android 侧的 `tinyplay` 也打不开设备;`app_process` 在 Android 16 上直
 它和家里的语音体系怎么联动:
 
 ```
-                          ┌──► vsay-canto ──► canto-tts(ONNX 男声)──┐
+                          ┌──► vsay-canto ──► moss-nano-port(ONNX 男声)──┐
 文本 ──► vsay(默认)──────┤                                          ├──► .wav ──► paplay ──► 喇叭
          │  默认引擎=canto └──► vsay-canto-female(克隆女声)─────────┘
          │                     (canto 男↔女 互退:缺一个就退另一个;
@@ -205,7 +205,7 @@ Android 侧的 `tinyplay` 也打不开设备;`app_process` 在 Android 16 上直
          └──► 回退链【不再指向 qwen3】—— 它已于 2026-09-22 退役归档
 ```
 
-> ⚠️ **2026-09-22 晚:qwen3-tts(2.2GB)已退役归档** ⇒ **canto-tts 成为唯一模型**。
+> ⚠️ **2026-09-22 晚:qwen3-tts(2.2GB)已退役归档** ⇒ **moss-nano-port 成为唯一模型**。
 > `vsay -e qwen3` 现在**明确报错 exit 3**;归档件 + 一键恢复见
 > `../voice-tts/retired/qwen3-tts/`(本 README 下方旧图/旧命令是**当时的事实**,保留不改)。
 
@@ -219,7 +219,7 @@ Android 侧的 `tinyplay` 也打不开设备;`app_process` 在 Android 16 上直
 ### 装机
 
 ```bash
-cd ~/Documents/repo/canto-tts
+cd ~/Documents/repo/moss-nano-port
 ./install.sh              # 本机(需 root;本机纪律:自动走 sbrun 提权)
 ./install.sh --target tablet   # 装到平板格仔的 Debian chroot
 ./install.sh --dry-run    # 只看要做什么,不动手
@@ -239,8 +239,8 @@ vsay-canto --no-daemon "..."               # 诊断:跳过常驻守护,只走 L2
 ### ⭐ 默认朗读(本机)
 
 ```bash
-vsay "今日天氣幾好"                # ← 默认 = canto-tts 男声(走本模块)
-vsay -e female "今日天氣幾好"       # 女声 = canto-tts 克隆(音色可换 VSAY_FEMALE_VOICE)
+vsay "今日天氣幾好"                # ← 默认 = moss-nano-port 男声(走本模块)
+vsay -e female "今日天氣幾好"       # 女声 = moss-nano-port 克隆(音色可换 VSAY_FEMALE_VOICE)
 ```
 
 > ⚠️ **2026-09-22 晚:qwen3 女声与轻量 VITS 均已退役** —— 下面这几条是**当时的命令**,保留作史册:
@@ -272,20 +272,20 @@ N=7 ./bench.sh              # 改前/改后耗时对比(自动拿 backups/ 里�
 
 | 放什么 | 位置 | 为什么 |
 |---|---|---|
-| python venv | `/opt/canto-tts-venv` | 程序 = add-on software |
-| 模块本体+文档 | `/opt/canto-tts` | 同上;**文档随包走**,换机器不靠翻会话 |
-| 安卓侧播放器参考实现 | `/opt/canto-tts/assets/android/` | 给「方案 C」App 抄的 `AudioTrack` 代码(见 NOTES §7) |
-| 模型权重 | `/var/lib/canto-tts/model` | 状态/数据归 `/var/lib` |
+| python venv | `/opt/moss-nano-port-venv` | 程序 = add-on software |
+| 模块本体+文档 | `/opt/moss-nano-port` | 同上;**文档随包走**,换机器不靠翻会话 |
+| 安卓侧播放器参考实现 | `/opt/moss-nano-port/assets/android/` | 给「方案 C」App 抄的 `AudioTrack` 代码(见 NOTES §7) |
+| 模型权重 | `/var/lib/moss-nano-port/model` | 状态/数据归 `/var/lib` |
 | 用户命令 | `/usr/local/bin/vsay-canto` | 自装命令的标准位 |
 | 离线轮子仓 | `pkg/<arch>-py<ver>/*.whl` | 非官方仓库包必须归档进包内 |
 | venv 引导 deb | `pkg/deb-aarch64/*.deb` | 平板的 `python3-venv`(官方仓库包,为完全离线也归档) |
 
 ⚠️ **`pkg/` 和 `models/` 是"安装介质",不装进 `/opt`** ——
-装完就没用了,复制过去等于白占 ~850MB(踩过:`/opt/canto-tts` 一度 853MB)。
+装完就没用了,复制过去等于白占 ~850MB(踩过:`/opt/moss-nano-port` 一度 853MB)。
 `install.sh` 拷进 `/opt` 时会排除它们,平板装完也会清掉 chroot 里的副本。
 
 平板侧全部装**在 chroot 内部** `/data/local/linux/debian` 之下,路径与笔记本同名同层(同构)。
-实测足迹:`/opt/canto-tts` 110K + `/opt/canto-tts-venv` 191M + `/var/lib/canto-tts` 730M ≈ **921MB**。
+实测足迹:`/opt/moss-nano-port` 110K + `/opt/moss-nano-port-venv` 191M + `/var/lib/moss-nano-port` 730M ≈ **921MB**。
 
 **没有** `/etc/profile.d/` 注入、**没有** `.bashrc` 改动、**没有** systemd 单元、
 **没有**常驻守护 —— 靠绝对路径的命令即可,零全局污染(熵减)。
@@ -296,16 +296,16 @@ N=7 ./bench.sh              # 改前/改后耗时对比(自动拿 backups/ 里�
 
 | 变量 | 默认 | 作用 |
 |---|---|---|
-| `VSAY_CANTO_MODEL` | `/var/lib/canto-tts/model` | 模型目录 |
-| `VSAY_CANTO_VENV` | `/opt/canto-tts-venv` | venv 目录 |
+| `VSAY_CANTO_MODEL` | `/var/lib/moss-nano-port/model` | 模型目录 |
+| `VSAY_CANTO_VENV` | `/opt/moss-nano-port-venv` | venv 目录 |
 | `VSAY_CANTO_CHUNK` | `50` | 每段最大字数(nano 模型对长文本会漂,切段更稳) |
 | `VSAY_CANTO_MAXTOTAL` | `0` | 限制总字数(0=不限) |
 | `VSAY_CANTO_DEADLINE` | `180` | 总时长上限秒数 |
 | `VSAY_CANTO_PLAYER` | 自动探测 | 强制播放器 |
 | `VSAY_CANTO_KEEP` | 空 | 非空则保留临时目录(调试) |
 | `VSAY_CANTO_DAEMON` | `1` | `0` = 禁用常驻守护,只用 L2/L3 |
-| `VSAY_CANTO_STREAM` | `/opt/canto-tts/lib/tts_stream.py` | 加速器路径(缺失则退回开发场那份) |
-| `VSAY_CANTO_SOCK` | `$XDG_RUNTIME_DIR/canto-tts.sock` | 守护 socket。⚠️ Android 没有 `/run`,平板要显式指到 `/data/local/linux/` |
+| `VSAY_CANTO_STREAM` | `/opt/moss-nano-port/lib/tts_stream.py` | 加速器路径(缺失则退回开发场那份) |
+| `VSAY_CANTO_SOCK` | `$XDG_RUNTIME_DIR/moss-nano-port.sock` | 守护 socket。⚠️ Android 没有 `/run`,平板要显式指到 `/data/local/linux/` |
 | `VSAY_CANTO_IDLE` | `300` | 守护空闲多少秒自动退出还内存(0=永不退出) |
 
 播放器自动探测顺序:`paplay`(Pulse)→ `pw-play`(PipeWire)→ `aplay`(裸 ALSA)。
@@ -318,8 +318,8 @@ N=7 ./bench.sh              # 改前/改后耗时对比(自动拿 backups/ 里�
 
 ```bash
 # 引擎直调(绕过包装,排障用)
-/opt/canto-tts-venv/bin/canto-tts synthesize "多謝晒。" -o /tmp/o.wav \
-    --checkpoint /var/lib/canto-tts/model
+/opt/moss-nano-port-venv/bin/moss-nano-port synthesize "多謝晒。" -o /tmp/o.wav \
+    --checkpoint /var/lib/moss-nano-port/model
 
 # 量一下时长/采样率
 ffprobe -v error -show_entries format=duration -of default=nw=1 /tmp/o.wav
@@ -367,7 +367,7 @@ DSH 的回复是普通话书面文,直接喂粤语模型 = **半咸淡**。
 
 ```bash
 # 微调权重(683MB,Apache-2.0)
-huggingface-cli download typangaa/canto-tts-nano --local-dir models/canto-tts-nano
+huggingface-cli download typangaa/moss-nano-port-nano --local-dir models/moss-nano-port-nano
 ```
 
 ### ② 普通话 / 英文 / 日语(可选)

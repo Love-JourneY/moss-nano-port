@@ -1,6 +1,6 @@
 <!--
   SPDX-License-Identifier: AGPL-3.0-or-later
-  canto-tts 系统 TTS 引擎 —— 服务声明【四件套】
+  moss-nano-port 系统 TTS 引擎 —— 服务声明【四件套】
 
   ⚠️ 这四件套是从「系统 TTS 悬案」的结案里得来的,缺一不可:
     ① android:exported="true"
@@ -24,7 +24,7 @@
         <service
             android:name="canto.CantoTtsService"
             android:exported="true"
-            android:label="canto-tts 粤语引擎"
+            android:label="moss-nano-port"
             android:permission="android.permission.BIND_TEXT_TO_SPEECH_ENGINE">
             <intent-filter>
                 <action android:name="android.intent.action.TTS_SERVICE" />

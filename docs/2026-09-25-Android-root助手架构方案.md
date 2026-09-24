@@ -84,7 +84,7 @@
 │   · 收回 PCM ⇒ callback.audioAvailable            │
 │   ⚠️ 它只做转发,【毫秒级】⇒ 不会被冻                 │
 └──────────────────┬───────────────────────────────┘
-                   │ /data/local/tmp/canto-tts.sock
+                   │ /data/local/tmp/moss-nano-port.sock
 ┌──────────────────▼───────────────────────────────┐
 │ 推理守护(root, uid 0, 常驻)                       │
 │   · 由 install.sh 用 su + setsid 启动(开机自启)   │

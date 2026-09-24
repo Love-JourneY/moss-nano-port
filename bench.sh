@@ -1,7 +1,7 @@
 #!/bin/bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026  Nija (bubu12) and contributors
-# canto-tts module —— 自有代码,AGPL-3.0-or-later(全文见 ./LICENSE;第三方见 ./NOTICE)
+# moss-nano-port module —— 自有代码,AGPL-3.0-or-later(全文见 ./LICENSE;第三方见 ./NOTICE)
 # ---------------------------------------------------------------------------
 # bench.sh —— vsay-canto 改前/改后耗时对比(可复跑)
 #
@@ -16,9 +16,9 @@ export XDG_RUNTIME_DIR=/run/user/1000 PULSE_SERVER=unix:/run/user/1000/pulse/nat
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OLD="$HERE/backups/vsay-canto.bak-20260922"
 NEW="$HERE/bin/vsay-canto"
-PY=/opt/canto-tts-venv/bin/python
+PY=/opt/moss-nano-port-venv/bin/python
 TS="$HERE/lib/tts_stream.py"
-SOCK=/run/user/1000/canto-tts.sock
+SOCK=/run/user/1000/moss-nano-port.sock
 N=${N:-5}
 
 T2='今日天氣幾好，我哋去食飯。'

@@ -1,4 +1,4 @@
-# CHANGELOG —— canto-tts 模块
+# CHANGELOG —— moss-nano-port 模块
 
 > 只记**用户可感知**的变化。逐次追加,不改旧条目。
 
@@ -67,7 +67,7 @@
 - 旧 **VITS**(`vits-cantonese-hf-xiaomaiiwn`,109MB):CER 22.0% · **发行包无 LICENSE** ⇒ 全面退役、零残留
 - 旧 **qwen3-tts**(2.2GB):模型太大、生产环境用不起 ⇒ 归档到 `/var/lib/retired/` ·
   `/opt/retired/`(一键恢复见 `voice-tts/retired/qwen3-tts/restore.sh`)
-- **canto-tts 成为唯一模型**
+- **moss-nano-port 成为唯一模型**
 
 ### 修掉的坑(如实记录)
 - `température` 参数运行时**完全无效**(采样逻辑烘进 ONNX 图)
@@ -81,6 +81,6 @@
 ## [0.1.4-module.0] — 2026-09-21
 
 ### 初始
-- canto-tts 部署到黑仔(Arch)与格仔(Android chroot)
+- moss-nano-port 部署到黑仔(Arch)与格仔(Android chroot)
 - 模块化:`install.sh` / `verify.sh` / `uninstall.sh` / `pack.sh`
-- 模型实体化到 `/var/lib/canto-tts/model`(729MB)
+- 模型实体化到 `/var/lib/moss-nano-port/model`(729MB)

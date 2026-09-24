@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026  Nija (bubu12) and contributors
 #
-# canto-tts module —— 粤语播报模块(上下配套开源项目)
+# moss-nano-port module —— 粤语播报模块(上下配套开源项目)
 # 本脚本属【本模块自有代码】,以 GNU AGPL-3.0-or-later 授权;全文见 ./LICENSE
 # ⚠️ 本模块打包/调用的第三方组件各有其许可(见 ./NOTICE),不因本文件而改变。
 # ---------------------------------------------------------------------------
-# uninstall.sh —— canto-tts 模块干净卸载(不留残留)
+# uninstall.sh —— moss-nano-port 模块干净卸载(不留残留)
 #
 #   ./uninstall.sh                     本机卸载
 #   ./uninstall.sh --target tablet     平板 chroot 卸载
@@ -40,7 +40,7 @@ run_root() {
 }
 
 uninstall_core() {
-  log "===== 卸载 canto-tts(本机)====="
+  log "===== 卸载 moss-nano-port(本机)====="
   local n=0
   del() { # $1=路径 $2=说明
     if [ -e "$1" ] || [ -L "$1" ]; then
@@ -64,8 +64,8 @@ uninstall_core() {
 
   # ⚠️ 反向扫描:确认没有残留的 PATH 注入 / profile.d 条目
   #    (本模块【不】写 profile.d —— 靠绝对路径的 /usr/local/bin 命令即可,零全局污染)
-  for f in /etc/profile.d/canto-tts.sh "$HOME/.bashrc"; do
-    if [ -f "$f" ] && grep -q "canto-tts" "$f" 2>/dev/null; then
+  for f in /etc/profile.d/moss-nano-port.sh "$HOME/.bashrc"; do
+    if [ -f "$f" ] && grep -q "moss-nano-port" "$f" 2>/dev/null; then
       warn "发现残留引用:$f(本模块本不该写这里,请人工确认)"
     fi
   done
@@ -74,7 +74,7 @@ uninstall_core() {
 }
 
 uninstall_tablet() {
-  log "===== 卸载平板 canto-tts ====="
+  log "===== 卸载平板 moss-nano-port ====="
   command -v adb >/dev/null 2>&1 || die "找不到 adb"
   local tgt; tgt="$(ct_pick_adb)" || die "三个 adb 目标全部掉线"
   ok "adb 目标:$tgt"

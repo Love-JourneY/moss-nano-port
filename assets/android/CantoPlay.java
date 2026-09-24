@@ -19,7 +19,7 @@ import java.io.IOException;
 
 public final class CantoPlay {
 
-    /** 极简 RIFF/WAVE 解析结果。只认 PCM(fmt=1)+16bit —— canto-tts 的输出正好是。 */
+    /** 极简 RIFF/WAVE 解析结果。只认 PCM(fmt=1)+16bit —— moss-nano-port 的输出正好是。 */
     private static final class Wav {
         int sampleRate = 48000;
         int channels = 2;
@@ -29,7 +29,7 @@ public final class CantoPlay {
 
     /**
      * 解析 WAV。⚠️ 不能假设 data 就在固定偏移 —— 真实文件里 fmt 块和 data 块之间
-     * 常有 LIST/fact 等附加块(canto-tts 的输出就带),必须按 chunk 逐个走。
+     * 常有 LIST/fact 等附加块(moss-nano-port 的输出就带),必须按 chunk 逐个走。
      */
     private static Wav readWav(String path) throws IOException {
         byte[] all;

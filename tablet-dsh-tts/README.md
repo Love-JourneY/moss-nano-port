@@ -1,6 +1,6 @@
 # tablet-dsh-tts —— 格仔(平板)DSH 🔊 语音播报对接包
 
-> 2026-09-22 立。目标：**平板上点 DSH 的 🔊 按钮 → 用 canto-tts 粤语男声真的出声。**
+> 2026-09-22 立。目标：**平板上点 DSH 的 🔊 按钮 → 用 moss-nano-port 粤语男声真的出声。**
 > 本目录 = 这一包的**源码**（整包可搬；部署到平板 chroot 的 4 个位置）。
 
 ## 链路（一句话）
@@ -9,7 +9,7 @@
 DSH 页面 🔊 按钮(dsh-tts 插件 client.js)
   → POST http://127.0.0.1:8790/speak          【server.js，平板 :8790】
   → /usr/local/bin/vsay                       【本包 vsay —— 平板适配层】
-  → vsay-canto  -o <单文件>                    【canto-tts 粤语男声；合成+拼接，不播】
+  → vsay-canto  -o <单文件>                    【moss-nano-port 粤语男声；合成+拼接，不播】
   → /usr/local/bin/vsay-android-play          【本包 —— 把 wav 交给 Android】
   → am start …/.SpeakTriggerActivity          【经 andro FIFO 桥】
   → Android AudioTrack → 扬声器

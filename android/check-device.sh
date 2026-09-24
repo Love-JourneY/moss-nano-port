@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026  Nija (bubu12) and contributors
 #
-# check-device.sh —— 【这台 Android 能不能跑 canto-tts 进程内推理?】
+# check-device.sh —— 【这台 Android 能不能跑 moss-nano-port 进程内推理?】
 #
 # ⚠️ 为什么有这个脚本(2026-09-24 实测教训):
 #   我们在格仔(平板)上把整条技术链【全部打通】了:
@@ -43,7 +43,7 @@ ADB="adb -s $TARGET"
 say(){ printf '  %s\n' "$*"; }
 VERDICT=0; REASONS=()
 
-echo "════ canto-tts 引擎 · 设备能力检测 ════"
+echo "════ moss-nano-port 引擎 · 设备能力检测 ════"
 echo "  设备: $TARGET"
 $ADB get-state >/dev/null 2>&1 || { echo "  ❌ 设备不在线"; exit 1; }
 
@@ -100,7 +100,7 @@ if [ "$VERDICT" = 0 ]; then
   echo "  ✅ 这台设备【看起来能跑】"
   echo "     下一步: ./install.sh && ./verify.sh --target $TARGET"
 else
-  echo "  ❌ 这台设备【大概率跑不动 canto-tts 进程内推理】"
+  echo "  ❌ 这台设备【大概率跑不动 moss-nano-port 进程内推理】"
   echo ""
   echo "     原因:"
   for r in "${REASONS[@]}"; do printf '       · %s\n' "$r"; done

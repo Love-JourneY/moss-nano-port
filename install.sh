@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026  Nija (bubu12) and contributors
 #
-# canto-tts module —— 粤语播报模块(上下配套开源项目)
+# moss-nano-port module —— 粤语播报模块(上下配套开源项目)
 # 本脚本属【本模块自有代码】,以 GNU AGPL-3.0-or-later 授权;全文见 ./LICENSE
 # ⚠️ 本模块打包/调用的第三方组件各有其许可(见 ./NOTICE),不因本文件而改变。
 # ---------------------------------------------------------------------------
-# install.sh —— canto-tts 模块部署(幂等 · 可重复跑 · 带 --dry-run)
+# install.sh —— moss-nano-port 模块部署(幂等 · 可重复跑 · 带 --dry-run)
 #
 # 一条命令部署:
 #   ./install.sh                     本机(自动识别平台)
@@ -63,7 +63,7 @@ install_core() {
   local arch; arch="$(ct_arch)"
   local pyv pybin
 
-  log "===== canto-tts 模块部署(本机·$arch)====="
+  log "===== moss-nano-port 模块部署(本机·$arch)====="
   log "模块版本 $CT_VERSION"
 
   # ---------- ① python 解释器 ----------
@@ -75,7 +75,7 @@ install_core() {
   log "目标解释器:$pybin(Python $(command -v "$pybin" >/dev/null && "$pybin" -V 2>&1 | awk '{print $2}'),py$pyv)"
 
   # ---------- ② venv ----------
-  if [ -x "$CT_VENV_DIR/bin/canto-tts" ]; then
+  if [ -x "$CT_VENV_DIR/bin/moss-nano-port" ]; then
     ok "venv 已在:$CT_VENV_DIR(跳过创建)"
   else
     if [ -d "$CT_VENV_DIR" ] && [ ! -x "$CT_VENV_DIR/bin/python" ]; then
@@ -111,11 +111,11 @@ install_core() {
   # ---------- ③ 离线轮子安装 ----------
   local pkgdir="$root/$CT_PKG_DIR_REL/${arch}-py${pyv}"
   if [ "$DRY" = "1" ]; then
-    printf '  %s[dry-run]%s pip install --no-index --find-links %s canto-tts ...\n' "$C_YEL" "$C_OFF" "$pkgdir" >&2
+    printf '  %s[dry-run]%s pip install --no-index --find-links %s moss-nano-port ...\n' "$C_YEL" "$C_OFF" "$pkgdir" >&2
   elif [ -d "$pkgdir" ] && compgen -G "$pkgdir/*.whl" >/dev/null 2>&1; then
     log "离线安装轮子:$pkgdir($(ls "$pkgdir"/*.whl 2>/dev/null | wc -l) 个)"
     if ! "$CT_VENV_DIR/bin/pip" install --no-index --find-links "$pkgdir" \
-           canto-tts==0.1.4 2>&1 | tail -3; then
+           moss-nano-port==0.1.4 2>&1 | tail -3; then
       warn "离线安装不完整,尝试补齐"
       ALLOW_NET=1
     fi
@@ -125,9 +125,9 @@ install_core() {
 
   # 联网兜底(仅为省事;不是必需 —— 离线轮子齐全时不走这条)
   if [ "$ALLOW_NET" = "1" ] && ! "$CT_VENV_DIR/bin/python" -c 'import canto_tts' >/dev/null 2>&1; then
-    log "联网兜底:pip 从镜像装 canto-tts(轮子归档缺失时才走)"
+    log "联网兜底:pip 从镜像装 moss-nano-port(轮子归档缺失时才走)"
     run "$CT_VENV_DIR/bin/pip" install -i "${CT_PIP_INDEX:-https://pypi.tuna.tsinghua.edu.cn/simple}" \
-        canto-tts==0.1.4 || die "pip 安装失败"
+        moss-nano-port==0.1.4 || die "pip 安装失败"
   fi
 
   # ---------- ④ 模型实体化(关键!见 NOTES.md「符号链接陷阱」) ----------
@@ -138,7 +138,7 @@ install_core() {
     ok "模型已实体化:$CT_MODEL_DIR"
   else
     run_root mkdir -p "$CT_DATA_DIR"
-    local arc="$root/models/canto-tts-nano"
+    local arc="$root/models/moss-nano-port-nano"
     if [ -d "$arc" ]; then
       log "从包内归档安装模型:$arc"
       run_root rm -rf "$CT_MODEL_DIR"
@@ -197,7 +197,7 @@ PY
 # 平板部署 = 把模块推进 chroot,再在 chroot 内跑本脚本的 install_core
 # =====================================================================
 install_tablet() {
-  log "===== canto-tts 部署到平板(格仔 · Debian chroot)====="
+  log "===== moss-nano-port 部署到平板(格仔 · Debian chroot)====="
   command -v adb >/dev/null 2>&1 || die "找不到 adb"
   local tgt; tgt="$(ct_pick_adb)" || die "三个 adb 目标全部掉线(Wi-Fi/VPN/USB 都试过)"
   ok "adb 目标:$tgt"
@@ -205,7 +205,7 @@ install_tablet() {
   local root; root="$(ct_root)"
   # 离线物要在【目标架构】下取:aarch64 轮子
   local pkgdir="$root/$CT_PKG_DIR_REL/aarch64-py313"
-  local stage="/data/local/tmp/canto-tts-stage"
+  local stage="/data/local/tmp/moss-nano-port-stage"
 
   if [ "$DRY" = "1" ]; then
     printf '  %s[dry-run]%s adb push %s → %s\n' "$C_YEL" "$C_OFF" "$root" "$stage" >&2
@@ -225,7 +225,7 @@ install_tablet() {
   # ⚠️ 幂等优化:轮子和模型各才 49M / 729M,每次重推一遍纯属浪费(实测推一次要 ~95 秒)。
   #    先问目标:已经装好了就【不推】。判据用"实体化后的真文件存在",不是"目录存在"。
   local need_wheels=1 need_model=1
-  if ct_adbx_cmd "$tgt" "[ -x $CT_VENV_DIR/bin/canto-tts ] && echo HAVE=1 || echo HAVE=0" 2>/dev/null | grep -q HAVE=1; then
+  if ct_adbx_cmd "$tgt" "[ -x $CT_VENV_DIR/bin/moss-nano-port ] && echo HAVE=1 || echo HAVE=0" 2>/dev/null | grep -q HAVE=1; then
     need_wheels=0; log "目标已有 venv+引擎 ⇒ 跳过推送轮子"
   fi
   if ct_adbx_cmd "$tgt" "[ -f $CT_MODEL_DIR/browser_poc_manifest.json ] && [ ! -L $CT_MODEL_DIR/browser_poc_manifest.json ] && echo HAVE=1 || echo HAVE=0" 2>/dev/null | grep -q HAVE=1; then
@@ -236,9 +236,9 @@ install_tablet() {
     log "推送 aarch64 离线轮子($(du -sh "$pkgdir" 2>/dev/null | cut -f1))"
     adb -s "$tgt" push "$pkgdir" "$stage/pkg/aarch64-py313" >/dev/null 2>&1 || warn "推送轮子失败"
   fi
-  if [ "$need_model" = "1" ] && [ -d "$root/models/canto-tts-nano" ]; then
-    log "推送模型归档($(du -sh "$root/models/canto-tts-nano" 2>/dev/null | cut -f1))"
-    adb -s "$tgt" push "$root/models/canto-tts-nano" "$stage/models/canto-tts-nano" >/dev/null 2>&1 || warn "推送模型失败"
+  if [ "$need_model" = "1" ] && [ -d "$root/models/moss-nano-port-nano" ]; then
+    log "推送模型归档($(du -sh "$root/models/moss-nano-port-nano" 2>/dev/null | cut -f1))"
+    adb -s "$tgt" push "$root/models/moss-nano-port-nano" "$stage/models/moss-nano-port-nano" >/dev/null 2>&1 || warn "推送模型失败"
   fi
   if [ "$need_wheels" = "1" ] && [ -d "$root/$CT_PKG_DIR_REL/deb-aarch64" ]; then
     log "推送离线 .deb(venv 引导用)"
@@ -257,7 +257,7 @@ install_tablet() {
     "echo INSTALL_RC=\$?"
 
   # ④ 清掉 chroot 里的"安装介质"(pkg/ models/)
-  # ⚠️ 必须清:轮到平板时 $root 就是 /opt/canto-tts,install_core 的
+  # ⚠️ 必须清:轮到平板时 $root 就是 /opt/moss-nano-port,install_core 的
   #    「排除 pkg/models 再拷进 /opt」那一步会整段跳过(源=目标),
   #    ⇒ 850MB 的轮子和模型会一直白占在 /opt 里。/opt 是程序位,不是仓库。
   log "清理 chroot 内的安装介质(pkg/ models/)"

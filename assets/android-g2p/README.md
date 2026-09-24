@@ -1,6 +1,6 @@
 # Android aarch64 粤语 G2P(交叉编译产物 + 复现方法)
 
-> **2026-09-22 交叉编译成功。** 为「Android canto-tts 推理引擎 App」提供**进程内**的
+> **2026-09-22 交叉编译成功。** 为「Android moss-nano-port 推理引擎 App」提供**进程内**的
 > 文本→粤拼音素转换(替代原来只有 chroot 才能用的 Python 版)。
 
 ## 产物

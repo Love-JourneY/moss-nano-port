@@ -1,8 +1,8 @@
-# Android 进程内 canto-tts(MOSS-TTS-Nano)ONNX 推理 —— 可行性验证报告
+# Android 进程内 moss-nano-port(MOSS-TTS-Nano)ONNX 推理 —— 可行性验证报告
 
 > 日期:2026-09-23 · 设备:平板「格仔」OPD2413(arm64-v8a,Android 16 / SDK 36,8 核,15.8GB RAM)
 > 本机:黑仔(Arch,`/opt/android-sdk`,ORT 1.30.0)
-> 原型工程:`~/dev/android-canto-tts/`
+> 原型工程:`~/dev/android-moss-nano-port/`
 
 ---
 
@@ -37,7 +37,7 @@
 ### 2.1 位置与结构
 
 ```
-~/dev/android-canto-tts/
+~/dev/android-moss-nano-port/
 ├── build.sh           所有 Java → 一个 dex(javac + d8,零 gradle)
 ├── deploy.sh          推 dex + native .so 到平板 /data/local/tmp
 ├── build-apk.sh       手工打造最小可安装 APK(aapt2 + d8 + zipalign + apksigner)
@@ -63,10 +63,10 @@
 **路 A:app_process(工程验证 / 压测,不用装 APK)**
 
 ```bash
-cd ~/dev/android-canto-tts
+cd ~/dev/android-moss-nano-port
 ./build.sh && ANDROID_SERIAL=<target> ./deploy.sh
 # 首次:把模型推到平板
-adb push /var/lib/canto-tts/model /data/local/tmp/canto-ort/model/
+adb push /var/lib/moss-nano-port/model /data/local/tmp/canto-ort/model/
 # 跑
 adb shell "CLASSPATH=/data/local/tmp/canto-ort/canto.dex \
            LD_LIBRARY_PATH=/data/local/tmp/canto-ort/lib \
@@ -189,8 +189,8 @@ adb logcat -s CantoSynth          # 固定 TAG,便于自动化验证
 **建议落地形态(方案 B 的具体化)**:
 
 ```
-android-canto-tts/                  ← 整包 cp -a 到另一台设备即可
-├── apk/canto-tts-engine.apk
+android-moss-nano-port/                  ← 整包 cp -a 到另一台设备即可
+├── apk/moss-nano-port.apk
 ├── model/                         (684.5 MB,已剔除死代码)
 ├── install.sh    adb install + push 模型 + **chown 成 App uid**
 ├── verify.sh     启动无界面 Service + grep logcat 固定 TAG + 校验 wav 时长
@@ -337,6 +337,6 @@ P3 必须专门验一条:**连续合成 N 句,检查是否存在中途停滞 / V
 ## 8. 参考
 
 - 调用序列说明书:`docs/python-pipeline.md`(1099 行,精确到张量名/形状/dtype)
-- 参照实现:`/opt/canto-tts/lib/tts_stream.py`、`/opt/canto-tts-venv/.../canto_tts/`
-- 模型:`/var/lib/canto-tts/model`(只读,未改动)
+- 参照实现:`/opt/moss-nano-port/lib/tts_stream.py`、`/opt/moss-nano-port-venv/.../canto_tts/`
+- 模型:`/var/lib/moss-nano-port/model`(只读,未改动)
 - 产出音频:`results/android_canto.wav` / `results/ref_canto.wav`

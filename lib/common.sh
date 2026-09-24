@@ -1,5 +1,5 @@
 #!/bin/bash
-# common.sh —— canto-tts 模块的共用常量与函数(被 install/verify/uninstall/pack 共同 source)
+# common.sh —— moss-nano-port 模块的共用常量与函数(被 install/verify/uninstall/pack 共同 source)
 #
 # ⚠️ 为什么要单独一个库:四个脚本都要用同一套路径常量。
 #    散着写四遍 = 改一处漏三处(变更涟漪);集中一处 = 改一次全对。
@@ -12,9 +12,9 @@
 CT_VERSION="0.1.4-module.1"
 
 # ---------- 路径契约(FHS 硬底线:程序→/opt,状态/数据→/var/lib,命令→/usr/local/bin) ----------
-CT_OPT_DIR="/opt/canto-tts"           # 模块本体(脚本+文档)安装位 —— add-on application software
-CT_VENV_DIR="/opt/canto-tts-venv"     # python 虚拟环境(笔记本既有,平板新建)
-CT_DATA_DIR="/var/lib/canto-tts"      # 状态/数据(模型权重、HF 缓存)—— 变量数据归 /var/lib
+CT_OPT_DIR="/opt/moss-nano-port"           # 模块本体(脚本+文档)安装位 —— add-on application software
+CT_VENV_DIR="/opt/moss-nano-port-venv"     # python 虚拟环境(笔记本既有,平板新建)
+CT_DATA_DIR="/var/lib/moss-nano-port"      # 状态/数据(模型权重、HF 缓存)—— 变量数据归 /var/lib
 CT_MODEL_DIR="$CT_DATA_DIR/model"     # 实体化后的模型目录(见 NOTES.md「符号链接陷阱」)
 CT_BIN="/usr/local/bin/vsay-canto"    # 面向用户的命令行包装
 
@@ -23,7 +23,7 @@ CT_PKG_DIR_REL="pkg"
 
 # ---------- 网络镜像(国内直连 HF 会卡;仅首次下载模型时用) ----------
 CT_HF_MIRROR="${CT_HF_MIRROR:-https://hf-mirror.com}"
-CT_HF_REPO="typangaa/canto-tts-nano"
+CT_HF_REPO="typangaa/moss-nano-port-nano"
 
 # ---------- 日志 ----------
 if [ -t 1 ]; then
@@ -79,7 +79,7 @@ ct_ensure_root() {
   log "非 root ⇒ 通过 sudo-bridge 重入(需在平板上点批准)"
   # ⚠️ 用绝对路径重入:$0 可能是 ./install.sh,而 sbrun 换 cwd 后会找不到文件
   local self; self="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
-  exec sbrun --why "canto-tts 模块部署:需要写 /opt、/var/lib、/usr/local/bin" -- "$self" "$@"
+  exec sbrun --why "moss-nano-port 模块部署:需要写 /opt、/var/lib、/usr/local/bin" -- "$self" "$@"
 }
 
 # ---------- 目标选择:本机 or 平板 chroot ----------

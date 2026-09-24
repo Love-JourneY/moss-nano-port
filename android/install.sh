@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026  Nija (bubu12) and contributors
 #
-# canto-tts for Android —— 一键部署(幂等 · 可重复跑 · 带 --dry-run)
+# moss-nano-port for Android —— 一键部署(幂等 · 可重复跑 · 带 --dry-run)
 #
 # ⚠️ 为什么是"便携包"而不是"一个 APK":
 #   模型底价 682.5MB(global_shared 420.7 + local_shared 219.6 + codec 42.2)砍不动,
@@ -30,7 +30,7 @@ done
 say(){ printf '  %s\n' "$*"; }
 run(){ if [ "$DRY" = 1 ]; then say "[dry-run] $*"; else eval "$@"; fi; }
 
-say "===== canto-tts for Android 部署 ====="
+say "===== moss-nano-port for Android 部署 ====="
 
 # ① 找设备(⚠️ 设备寻址纪律:优先 MAC 解析,IP 只当回退)
 if [ -z "$TARGET" ]; then
@@ -50,13 +50,13 @@ if [ "$NO_APK" = 0 ]; then
   # ⚠️ APK 位置:打包时可能落在 android/apk/ 或 ../assets/android-engine/apk/
 #   (2026-09-26 修:原来只找 $HERE/apk/ ⇒ 便携包里没有 ⇒ install.sh 直接失败)
 APK=""
-for c in "$HERE/apk/canto-tts-engine.apk" \
-         "$HERE/../assets/android-engine/apk/canto-tts-engine.apk" \
+for c in "$HERE/apk/moss-nano-port.apk" \
+         "$HERE/../assets/android-engine/apk/moss-nano-port.apk" \
          ; do
   [ -f "$c" ] && { APK="$c"; break; }
 done
 if [ -z "$APK" ]; then
-  echo "  ❌ 找不到 canto-tts-engine.apk" >&2
+  echo "  ❌ 找不到 moss-nano-port.apk" >&2
   echo "     找过:$HERE/apk/ · $HERE/../assets/android-engine/apk/" >&2
   echo "     先跑 ./pack.sh 构建 APK,或设 CANTO_APK=<路径>" >&2
   exit 1
@@ -69,25 +69,25 @@ fi
 
 # ③ 模型(GPU 无关,纯 CPU;684MB)
 # ⚠️ 模型源:【包内优先】(整包可迁移的关键)—— 2026-09-26 修
-#   原来只认 /var/lib/canto-tts/model(本机安装位)
+#   原来只认 /var/lib/moss-nano-port/model(本机安装位)
 #   ⇒ 搬到另一台设备时那个路径不存在 ⇒ 迁移失败
 #   ⇒ 正解:先找包内的 models/*,再回退到本机安装位
 MODEL_SRC="${CANTO_MODEL_SRC:-}"
 if [ -z "$MODEL_SRC" ]; then
   # ⚠️ 顺序 = 优先级:【包内 → 本机安装位】
-  #   包内实际在 models/canto-tts-nano/(不是 models/ 直接放)
-  for c in "$HERE/../models/canto-tts-nano" \
-           "$HERE/models/canto-tts-nano" \
+  #   包内实际在 models/moss-nano-port-nano/(不是 models/ 直接放)
+  for c in "$HERE/../models/moss-nano-port-nano" \
+           "$HERE/models/moss-nano-port-nano" \
            "$HERE/../models" \
            "$HERE/models" \
-           "/var/lib/canto-tts/model"; do
+           "/var/lib/moss-nano-port/model"; do
     # 判据:这个目录里得有 MOSS-TTS-Nano-cantophon-ONNX
     if [ -d "$c/MOSS-TTS-Nano-cantophon-ONNX" ]; then MODEL_SRC="$(cd "$c" && pwd)"; break; fi
   done
 fi
 if [ -z "$MODEL_SRC" ] || [ ! -d "$MODEL_SRC/MOSS-TTS-Nano-cantophon-ONNX" ]; then
   echo "  ❌ 找不到模型目录(MOSS-TTS-Nano-cantophon-ONNX)" >&2
-  echo "     找过:包内 models/ · /var/lib/canto-tts/model" >&2
+  echo "     找过:包内 models/ · /var/lib/moss-nano-port/model" >&2
   echo "     可用 CANTO_MODEL_SRC=<路径> 指定" >&2
   exit 1
 fi

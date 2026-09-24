@@ -1,11 +1,11 @@
-canto-tts module —— 粤语播报模块(上下配套开源项目)
+moss-nano-port module —— 粤语播报模块(上下配套开源项目)
 Copyright (C) 2026  Nija (bubu12) and contributors
 
 本模块的【自有代码/脚本/文档】(install.sh · verify.sh · uninstall.sh · pack.sh · bin/ ·
 lib/ · tools/ · README.md · NOTES.md · docs/)以 GNU AGPL-3.0 授权,全文见下。
 
 ⚠️ 重要:本模块【打包/调用】的第三方组件各有其自己的许可,【不因本文件而改变】:
-   · canto-tts 模型与 pip 包(canto-tts-nano-v1 / typangaa/canto-tts / OpenMOSS MOSS-TTS-Nano)……Apache-2.0
+   · moss-nano-port 模型与 pip 包(moss-nano-port-nano-v1 / typangaa/moss-nano-port / OpenMOSS MOSS-TTS-Nano)……Apache-2.0
    · ONNX Runtime ………………………………………………………………………………… MIT
    · 音色库 cv01~cv04 参照音频(Common Voice 22 yue)……………………………… CC-0
    · 音色库 qwen_hk / qwen_short …………………………………………………………… Apache-2.0 + CC-0 数据

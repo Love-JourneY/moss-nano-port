@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// canto-tts 系统 TTS 引擎 —— 设置页(音色 + 全部引擎旋钮)
+// moss-nano-port 系统 TTS 引擎 —— 设置页(音色 + 全部引擎旋钮)
 //
 // Nija 2026-09-27:「音质啊、码率啊、采样率啊这些,我希望都可以直接在引擎里面设置。」
 //   ⇒ 本页把 tuning.properties 的【全部旋钮】暴露出来,不用再 adb 改文件。

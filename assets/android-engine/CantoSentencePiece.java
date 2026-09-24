@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// canto-tts 引擎 —— 纯 Java 的 SentencePiece 文本编码器(MOSS-TTS-Nano 基础版用)
+// moss-nano-port 引擎 —— 纯 Java 的 SentencePiece 文本编码器(MOSS-TTS-Nano 基础版用)
 //
 // ⚠️⚠️ 为什么需要它(2026-09-28):
 //   【粤语】路径:汉字 →[canto_hk_g2p]→ 粤拼 →[CantoCantophon]→ 三元组 →[added_tokens]→ id

@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026  Nija (bubu12) and contributors
 #
-# canto-tts module —— 粤语播报模块(上下配套开源项目)
+# moss-nano-port module —— 粤语播报模块(上下配套开源项目)
 # 本脚本属【本模块自有代码】,以 GNU AGPL-3.0-or-later 授权;全文见 ./LICENSE
 # ⚠️ 本模块打包/调用的第三方组件各有其许可(见 ./NOTICE),不因本文件而改变。
 # ---------------------------------------------------------------------------
-# verify.sh —— canto-tts 模块验收(给出【通过/失败清单】,不靠"看着像好了")
+# verify.sh —— moss-nano-port 模块验收(给出【通过/失败清单】,不靠"看着像好了")
 #
 # 判据是硬的:每一项都实际执行并检查产物,任一项失败 ⇒ 退出码 1。
 #
@@ -49,7 +49,7 @@ target_run() {
   fi
 }
 
-log "===== canto-tts 验收(target=$TARGET)====="
+log "===== moss-nano-port 验收(target=$TARGET)====="
 
 # 一次性把【目标机上】的事实抓回来,再本地判定 —— 避免几十次往返
 FACTS="$(target_run <<EOF
@@ -57,8 +57,8 @@ echo "ARCH=\$(uname -m)"
 echo "PY=\$(command -v python3 || echo none)"
 echo "PYV=\$(python3 -c 'import sys;print("%d.%d"%sys.version_info[:2])' 2>/dev/null || echo none)"
 echo "VENV_PY=\$([ -x $CT_VENV_DIR/bin/python ] && echo yes || echo no)"
-echo "VENV_VER=\$($CT_VENV_DIR/bin/python -c 'import importlib.metadata as m;print(m.version("canto-tts"))' 2>/dev/null || echo none)"
-echo "CLI=\$([ -x $CT_VENV_DIR/bin/canto-tts ] && echo yes || echo no)"
+echo "VENV_VER=\$($CT_VENV_DIR/bin/python -c 'import importlib.metadata as m;print(m.version("moss-nano-port"))' 2>/dev/null || echo none)"
+echo "CLI=\$([ -x $CT_VENV_DIR/bin/moss-nano-port ] && echo yes || echo no)"
 echo "MODEL=\$([ -f $CT_MODEL_DIR/browser_poc_manifest.json ] && echo yes || echo no)"
 echo "MODEL_SYMLINK=\$(find $CT_MODEL_DIR -type l 2>/dev/null | wc -l)"
 echo "BIN=\$([ -x $CT_BIN ] && echo yes || echo no)"
@@ -68,8 +68,8 @@ echo "G2P=\$($CT_VENV_DIR/bin/python -c 'import canto_hk_g2p;print("ok")' 2>/dev
 echo "ORT=\$($CT_VENV_DIR/bin/python -c 'import onnxruntime as o;print(o.__version__)' 2>/dev/null || echo missing)"
 echo "===SYNTH==="
 T=\$(mktemp -d 2>/dev/null || echo /tmp/ct-verify-\$\$); mkdir -p "\$T"
-if [ -x $CT_VENV_DIR/bin/canto-tts ] && [ -d $CT_MODEL_DIR ]; then
-  if $CT_VENV_DIR/bin/canto-tts synthesize "今日天氣幾好，多謝晒。" -o "\$T/v.wav" --checkpoint $CT_MODEL_DIR >/dev/null 2>&1 && [ -s "\$T/v.wav" ]; then
+if [ -x $CT_VENV_DIR/bin/moss-nano-port ] && [ -d $CT_MODEL_DIR ]; then
+  if $CT_VENV_DIR/bin/moss-nano-port synthesize "今日天氣幾好，多謝晒。" -o "\$T/v.wav" --checkpoint $CT_MODEL_DIR >/dev/null 2>&1 && [ -s "\$T/v.wav" ]; then
     echo "SYNTH_OK=yes"
     echo "SYNTH_BYTES=\$(wc -c < "\$T/v.wav")"
     echo "SYNTH_RATE=\$(python3 -c "
@@ -119,8 +119,8 @@ fi
 
 # ---------- 逐项判定 ----------
 [ -n "$(g ARCH)" ]                                  ; chk "目标机可达" $? "$(g ARCH)"
-[ "$(g CLI)" = "yes" ]                              ; chk "CLI 可执行 ($CT_VENV_DIR/bin/canto-tts)" $? "CLI=$(g CLI)"
-[ "$(g VENV_VER)" != "none" ] && [ -n "$(g VENV_VER)" ] ; chk "canto-tts 已装" $? "版本=$(g VENV_VER)"
+[ "$(g CLI)" = "yes" ]                              ; chk "CLI 可执行 ($CT_VENV_DIR/bin/moss-nano-port)" $? "CLI=$(g CLI)"
+[ "$(g VENV_VER)" != "none" ] && [ -n "$(g VENV_VER)" ] ; chk "moss-nano-port 已装" $? "版本=$(g VENV_VER)"
 # ⚠️ 注意要同时判"非空" —— 空字符串 != "missing" 会让这条假过(踩过)
 [ -n "$(g ORT)" ] && [ "$(g ORT)" != "missing" ]    ; chk "onnxruntime 可 import" $? "版本=$(g ORT)"
 [ "$(g G2P)" = "ok" ]                               ; chk "canto-hk-g2p 可 import(粤语 G2P)" $? "$(g G2P)"

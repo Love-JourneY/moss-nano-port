@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   SPDX-License-Identifier: AGPL-3.0-or-later
-  canto-tts 系统 TTS 引擎 —— APK 清单
+  moss-nano-port 系统 TTS 引擎 —— APK 清单
 
   ⚠️ 服务声明【四件套】(从"系统 TTS 悬案"结案得来,缺一不可):
     ① android:exported="true"

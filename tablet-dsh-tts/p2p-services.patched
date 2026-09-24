@@ -161,7 +161,7 @@ case "${1:-}" in
     echo "启动服务:"
     /etc/init.d/port-gate start >/dev/null 2>&1 || true   # port-gate 模块登记
     start_sshd; start_dinotty; start_dsh
-    /etc/init.d/dsh-tts start                             # dsh-tts 模块登记（DSH 🔊 → canto-tts）
+    /etc/init.d/dsh-tts start                             # dsh-tts 模块登记（DSH 🔊 → moss-nano-port）
     ;;
   stop)
     echo "停止服务:"

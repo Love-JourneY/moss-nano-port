@@ -32,13 +32,13 @@
 #      /etc/profile.d 一律不生效 ⇒ 不写 PATH 的话 vpunct/date/mktemp/python3 全找不到。
 #   2. 【必须显式 export TMPDIR=/tmp】。Android 会把 TMPDIR=/data/local/tmp 隐式带进
 #      chroot,而**那个目录在 chroot 里不存在** ⇒ mktemp 会失败、临时文件落到虚空。
-#      /etc/profile.d/canto-tts.sh 里那条只覆盖登录 shell,救不了 DSH 这条非登录调用。
+#      /etc/profile.d/moss-nano-port.sh 里那条只覆盖登录 shell,救不了 DSH 这条非登录调用。
 #      ⇒ 这里是真正兜底的那一处。
 #
 # 用法:
-#   vsay "想講嘅嘢"                # 默认 = canto-tts 粤语【男声】
+#   vsay "想講嘅嘢"                # 默认 = moss-nano-port 粤语【男声】
 #   vsay -n "..."                  # 不补标点
-#   vsay -e female "..."           # canto-tts 粤语女声(音色默认 cv03,可用 VSAY_FEMALE_VOICE 换)
+#   vsay -e female "..."           # moss-nano-port 粤语女声(音色默认 cv03,可用 VSAY_FEMALE_VOICE 换)
 #   vsay -e qwen3 "..."            # qwen3 女声(旧默认,保留为可选)
 #   vsay -m zhll "..."             # 兼容 dsh-tts;-m 被吃掉、忽略
 #   echo "..." | vsay              # 从管道进
@@ -141,7 +141,7 @@ run_engine() {
 # ── 5. 派发(每条路都有回退,绝不"静默没声")────────────────────────────
 case "$ENGINE" in
   canto|"")
-    # 默认:canto-tts 粤语【男声】(就是用户要的那个)
+    # 默认:moss-nano-port 粤语【男声】(就是用户要的那个)
     if [ -x /usr/local/bin/vsay-canto ]; then
       run_engine /usr/local/bin/vsay-canto -o
       exit $?
@@ -161,7 +161,7 @@ case "$ENGINE" in
     exit 1
     ;;
   female|f)
-    # canto-tts 粤语女声(同一模型,只换音色 codes)
+    # moss-nano-port 粤语女声(同一模型,只换音色 codes)
     # ⚠️ 不在这里写死 VSAY_FEMALE_VOICE 默认值 —— 留空时用 vsay-canto-female
     #    自己的默认(cv03,Nija 2026-09-22 试听后选定)。写死会把它盖掉。
     if [ -x /usr/local/bin/vsay-canto-female ]; then

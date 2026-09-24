@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026  Nija (bubu12) and contributors
-# canto-tts module —— 自有代码,AGPL-3.0-or-later(全文见 ./LICENSE;第三方见 ./NOTICE)
+# moss-nano-port module —— 自有代码,AGPL-3.0-or-later(全文见 ./LICENSE;第三方见 ./NOTICE)
 # ---------------------------------------------------------------------------
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-tts_stream.py —— canto-tts 的【一次加载、多段合成】流式器 / 常驻守护(攻关原型)
+tts_stream.py —— moss-nano-port 的【一次加载、多段合成】流式器 / 常驻守护(攻关原型)
 
 ## 为什么需要它(实测数据,2026-09-22)
 
-现有的 `canto-tts synthesize` CLI 是【一次调用只合成一段】。而 `vsay-canto`
+现有的 `moss-nano-port synthesize` CLI 是【一次调用只合成一段】。而 `vsay-canto`
 会按标点把文本切成多段,逐段各起一个**新进程**:
 
     while IFS= read -r line; do
@@ -17,7 +17,7 @@ tts_stream.py —— canto-tts 的【一次加载、多段合成】流式器 / �
     done
 
 `vsay-canto` 第 107 行的注释写着「首次调用要加载 ONNX(数秒);之后每段很快」——
-**这条注释是错的**。每次 `canto-tts` 调用都是一个全新进程,必须把 8 个 ONNX
+**这条注释是错的**。每次 `moss-nano-port` 调用都是一个全新进程,必须把 8 个 ONNX
 session 从磁盘重新加载一遍。实测(平板 chroot,8 核):
 
     单段独立进程          4512 ms
@@ -59,8 +59,8 @@ session 从磁盘重新加载一遍。实测(平板 chroot,8 核):
     printf '%s\\n' "今日天氣幾好，" "我哋去食飯。" | tts_stream.py --outdir /tmp/x
 
     # 常驻(首次调用会慢,之后每段只花合成时间)
-    tts_stream.py --serve --sock /run/user/1000/canto-tts.sock --idle-timeout 600 &
-    printf '%s\\n' "..." | tts_stream.py --client --sock /run/user/1000/canto-tts.sock --outdir /tmp/x
+    tts_stream.py --serve --sock /run/user/1000/moss-nano-port.sock --idle-timeout 600 &
+    printf '%s\\n' "..." | tts_stream.py --client --sock /run/user/1000/moss-nano-port.sock --outdir /tmp/x
 
 ## ⚠️ 线程
 实测 ORT intra_op 线程数 **2~4 最优**;8/12 线程反而慢数倍
@@ -98,7 +98,7 @@ def load_tts(checkpoint: str, threads: int | None):
 #     比如说七六八零采样。这个感觉是个很高的音质,我们可以砍一半,ok?
 #     因为…很多音乐平台上那种无损音质和普通MP3音质,我都听不太出来区别。」
 #
-# ⚠️ 它【不能】提速/省内存 —— canto-tts 模型【内部就是 48kHz 生成】的,
+# ⚠️ 它【不能】提速/省内存 —— moss-nano-port 模型【内部就是 48kHz 生成】的,
 #   该算的还是算。它只省:① 磁盘/传输的字节数 ② 播放缓冲 ③ 音频文件大小。
 #
 # ⚠️ 降采样【不能】"每两个取一个"(直接抽取):
@@ -402,16 +402,16 @@ def run_client(args) -> int:
 
 # ──────────────────────────────────────────────────────────────────────
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="canto-tts 一次加载多段合成(流式输出路径)")
-    ap.add_argument("--checkpoint", default=os.environ.get("VSAY_CANTO_MODEL", "/var/lib/canto-tts/model"),
-                    help="模型目录(默认 $VSAY_CANTO_MODEL 或 /var/lib/canto-tts/model)")
+    ap = argparse.ArgumentParser(description="moss-nano-port 一次加载多段合成(流式输出路径)")
+    ap.add_argument("--checkpoint", default=os.environ.get("VSAY_CANTO_MODEL", "/var/lib/moss-nano-port/model"),
+                    help="模型目录(默认 $VSAY_CANTO_MODEL 或 /var/lib/moss-nano-port/model)")
     ap.add_argument("--outdir", help="输出目录(每段一个 seg-<n>.wav)")
     ap.add_argument("--threads", type=int, default=None,
                     help="ORT intra_op 线程数。⚠️实测 2~4 最优,越多越慢。不传则用 SDK 默认 4。")
     ap.add_argument("--timing", action="store_true", help="每段耗时打到 stderr")
     ap.add_argument("--serve", action="store_true", help="常驻守护模式")
     ap.add_argument("--client", action="store_true", help="客户端模式(转发给常驻守护)")
-    ap.add_argument("--sock", default="/run/user/%d/canto-tts.sock" % os.getuid(),
+    ap.add_argument("--sock", default="/run/user/%d/moss-nano-port.sock" % os.getuid(),
                     help="Unix socket 路径(serve/client 用)")
     ap.add_argument("--idle-timeout", type=float, default=0.0,
                     help="守护空闲多少秒后自动退出(0=永不退出);退出会把 1.4GiB 内存还回去")

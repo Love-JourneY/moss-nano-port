@@ -39,18 +39,18 @@
 #      /etc/profile.d 一律不生效 ⇒ 不写 PATH 的话 vpunct/date/mktemp/python3 全找不到。
 #   2. 【必须显式 export TMPDIR=/tmp】。Android 会把 TMPDIR=/data/local/tmp 隐式带进
 #      chroot,而**那个目录在 chroot 里不存在** ⇒ mktemp 会失败、临时文件落到虚空。
-#      /etc/profile.d/canto-tts.sh 里那条只覆盖登录 shell,救不了 DSH 这条非登录调用。
+#      /etc/profile.d/moss-nano-port.sh 里那条只覆盖登录 shell,救不了 DSH 这条非登录调用。
 #      ⇒ 这里是真正兜底的那一处。
 #
 # 用法:
-#   vsay "想講嘅嘢"                # 默认 = canto-tts 粤语【男声】
+#   vsay "想講嘅嘢"                # 默认 = moss-nano-port 粤语【男声】
 #   vsay -n "..."                  # 不补标点
-#   vsay -e female "..."           # canto-tts 粤语女声(音色默认 cv03,可用 VSAY_FEMALE_VOICE 换)
+#   vsay -e female "..."           # moss-nano-port 粤语女声(音色默认 cv03,可用 VSAY_FEMALE_VOICE 换)
 #   vsay -e qwen3 "..."            # 🔴 已退役 ⇒ 明确报错 exit 3(见下)
 #   vsay -m zhll "..."             # 兼容 dsh-tts;-m 被吃掉、忽略
 #   echo "..." | vsay              # 从管道进
 #
-# ⚠️ 2026-09-22 qwen3-tts(2.2GB)已【退役归档】⇒ **canto-tts 成为唯一模型**。
+# ⚠️ 2026-09-22 qwen3-tts(2.2GB)已【退役归档】⇒ **moss-nano-port 成为唯一模型**。
 #    · 回退链已改:canto 缺 ⇒ 退 female;female 缺 ⇒ 退 canto;
 #      两条都缺 ⇒ 【明确报错 exit 1】(不回退到已归档的引擎 —— 那等于保证失败)
 #    · `-e qwen3` ⇒ 【明确报错 exit 3】(不静默、不偷偷换音色)
@@ -235,7 +235,7 @@ run_engine_relay() {
 # ── 5. 派发(每条路都有回退,绝不"静默没声")────────────────────────────
 case "$ENGINE" in
   canto|"")
-    # 默认:canto-tts 粤语【男声】(就是用户要的那个)
+    # 默认:moss-nano-port 粤语【男声】(就是用户要的那个)
     if [ -x /usr/local/bin/vsay-canto ]; then
       # ★ 平板优先走接力(首字 3.91s → ~1.2s);接力器缺失或被 VSAY_ANDROID_RELAY=0
       #   关掉时 RELAY_OK=0,自动落回下面那条【已验收的】老路 —— 不存在"改坏就没声"。
@@ -247,7 +247,7 @@ case "$ENGINE" in
       exit $?
     fi
     # ⚠️ 2026-09-22 qwen3 退役后:回退目标改成 canto【女声】——
-    #    同一个 canto-tts 模型、同一条粤语发音路径,只换音色 codes
+    #    同一个 moss-nano-port 模型、同一条粤语发音路径,只换音色 codes
     #    ⇒ 这才是真正的优雅降级。旧代码回退到 vsay-yue,而那条命令已归档、
     #      且平板上【从来就没有】qwen3 模型/CLI ⇒ 旧回退是"保证失败"的死代码。
     if [ -x /usr/local/bin/vsay-canto-female ]; then
@@ -255,8 +255,8 @@ case "$ENGINE" in
       run_engine /usr/local/bin/vsay-canto-female --out
       exit $?
     fi
-    echo "vsay: 错误 —— canto-tts 两条线都不可用(vsay-canto / vsay-canto-female 均缺失)" >&2
-    echo "      本机唯一的 TTS 引擎就是 canto-tts;请先恢复它" >&2
+    echo "vsay: 错误 —— moss-nano-port 两条线都不可用(vsay-canto / vsay-canto-female 均缺失)" >&2
+    echo "      本机唯一的 TTS 引擎就是 moss-nano-port;请先恢复它" >&2
     exit 1
     ;;
   qwen3|yue)
@@ -266,12 +266,12 @@ case "$ENGINE" in
     #    ⚠️ exit 3 是专用退出码(1=无引擎 / 2=未知引擎),方便脚本识别
     #       "这是退役引擎,不是环境坏了"。
     echo "vsay: 🔴 引擎 'qwen3' 已于 2026-09-22 退役归档,不再可用。" >&2
-    echo "      原因:模型 2.2GB,生产环境用不起;canto-tts 已是唯一模型。" >&2
+    echo "      原因:模型 2.2GB,生产环境用不起;moss-nano-port 已是唯一模型。" >&2
     echo "      改用 :vsay \"...\"(男声)  或  vsay -e female \"...\"(女声)" >&2
     exit 3
     ;;
   female|f)
-    # canto-tts 粤语女声(同一模型,只换音色 codes)
+    # moss-nano-port 粤语女声(同一模型,只换音色 codes)
     # ⚠️ 不在这里写死 VSAY_FEMALE_VOICE 默认值 —— 留空时用 vsay-canto-female
     #    自己的默认(cv03,Nija 2026-09-22 试听后选定)。写死会把它盖掉。
     if [ -x /usr/local/bin/vsay-canto-female ]; then
@@ -286,8 +286,8 @@ case "$ENGINE" in
       run_engine /usr/local/bin/vsay-canto -o
       exit $?
     fi
-    echo "vsay: 错误 —— canto-tts 两条线都不可用(vsay-canto-female / vsay-canto 均缺失)" >&2
-    echo "      本机唯一的 TTS 引擎就是 canto-tts;请先恢复它" >&2
+    echo "vsay: 错误 —— moss-nano-port 两条线都不可用(vsay-canto-female / vsay-canto 均缺失)" >&2
+    echo "      本机唯一的 TTS 引擎就是 moss-nano-port;请先恢复它" >&2
     exit 1
     ;;
   *)

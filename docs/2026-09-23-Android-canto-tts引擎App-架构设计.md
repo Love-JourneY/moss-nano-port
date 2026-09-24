@@ -1,7 +1,7 @@
-# Android canto-tts 推理引擎 App —— 架构设计
+# Android moss-nano-port 推理引擎 App —— 架构设计
 
 > ⚠️ **本文是【设计稿】,不是已完成的事实。** 撰写:**2026-09-22**
-> 目标:自研 Android 端的 canto-tts **进程内推理引擎**,注册成系统 TTS 引擎。
+> 目标:自研 Android 端的 moss-nano-port **进程内推理引擎**,注册成系统 TTS 引擎。
 > 依据:可行性已验证(见 §1)+ 知识库 `~/Documents/system-maintenance/notes/2026-09-22-语音模型技术路线知识库.md`
 
 ---
@@ -9,15 +9,15 @@
 ## §1 为什么要做这件事(动机,别忘)
 
 ```
-现状:粤语 canto-tts 跑在【chroot(Linux 容器)】里
+现状:粤语 moss-nano-port 跑在【chroot(Linux 容器)】里
 问题:TextToSpeechService 必须在【引擎进程内】合成
      ⇒ 【chroot 那条路当不了系统 TTS 引擎】
-⇒ 所以浏览器/任意 App 调系统 TTS 时,听不到 canto-tts 粤语
+⇒ 所以浏览器/任意 App 调系统 TTS 时,听不到 moss-nano-port 粤语
 
 要实现的效果:
   浏览器 / 任意 App → 系统 TTS(TextToSpeechService)
                     → 【我们的 App 进程内跑 ONNX 推理】
-                    → 粤语 canto-tts 音色(而且音色可选)
+                    → 粤语 moss-nano-port 音色(而且音色可选)
 ```
 
 ### 可行性已实测(2026-09-22,平板 arm64-v8a · SDK 36)
@@ -184,7 +184,7 @@ com.fcitx5sensevoice(现有 IME 宿主 App,AGPL-3.0)
 
 ### 4.3 粤语 G2P 怎么上 Android
 ```
-现状:canto-hk-g2p 是 0.6MB 的 Rust 库(随 canto-tts pip 包)
+现状:canto-hk-g2p 是 0.6MB 的 Rust 库(随 moss-nano-port pip 包)
 问题:Android 上跑 Rust 需要【交叉编译 .so + JNI】
 候选:
   A. 交叉编译 Rust → libcanto_hk_g2p.so + JNI 封装      ← 干净,但要 NDK 工具链
@@ -277,8 +277,8 @@ Android 15+ 由 TextToSpeechManagerPerUserService 代绑
 | 不做 | 理由 |
 |---|---|
 | **全双工(GPT Live)** | **Nija 2026-09-22 明确延后**(「以后看看有什么办法再实验设计」) |
-| **重训/微调模型** | 现有 canto-tts 权重够用;重训要数据 + 算力,另有路线 |
-| **改上游 canto-tts 包** | 项目铁律:上游保持 clean |
+| **重训/微调模型** | 现有 moss-nano-port 权重够用;重训要数据 + 算力,另有路线 |
+| **改上游 moss-nano-port 包** | 项目铁律:上游保持 clean |
 | **量化(先不做)** | 未过"音色指纹 + ASR-CER"双 gate 前不上 |
 | **上 4B/8B MOSS 大模型** | 8~16GB,平板无望(知识库 §11.2 已判) |
 | **替换现有 IME/识别线** | 那条线已验收,别动 |
@@ -289,13 +289,13 @@ Android 15+ 由 TextToSpeechManagerPerUserService 代绑
 
 | 已有 | 复用方式 |
 |---|---|
-| `/opt/canto-tts/lib/tts_stream.py` | **调用顺序的参照实现**(读它把 prefill→decode→tokenizer 摸清) |
-| `canto_tts` Python SDK(`/opt/canto-tts-venv`) | 同上;不是直接复用(要移植到 Java/Kotlin) |
+| `/opt/moss-nano-port/lib/tts_stream.py` | **调用顺序的参照实现**(读它把 prefill→decode→tokenizer 摸清) |
+| `canto_tts` Python SDK(`/opt/moss-nano-port-venv`) | 同上;不是直接复用(要移植到 Java/Kotlin) |
 | `voicebank/*.json` | **直接复用**(音色 codes + 74 维音色指纹) |
 | `p2y.py`(1907 条) | **移植成 Kotlin**(纯规则表,无依赖) |
 | `SherpaTtsEngine` / `VoiceTtsPlayer` / `SpeakService` | **复用播放链路**(AudioTrack 那套已验证) |
 | `tools/tts-probe/`(12KB 诊断探针) | **复用**(把"系统认不认我们"变成可观测事实) |
-| Android 可行性原型 `~/dev/android-canto-tts/` | **继续用**(app_process 路线,不弹 UI) |
+| Android 可行性原型 `~/dev/android-moss-nano-port/` | **继续用**(app_process 路线,不弹 UI) |
 
 ---
 
@@ -311,7 +311,7 @@ P1 单图推理正确性
 
 P2 完整链路合成(★关键里程碑)
    Android 上真的合成一段粤语(哪怕一句)
-   ⇒ 产出 wav + 客观指标(F0/时长)+ 与本机 canto-tts 输出比对
+   ⇒ 产出 wav + 客观指标(F0/时长)+ 与本机 moss-nano-port 输出比对
 
 P3 引擎封装
    CantoSynthesizer / Segmenter / VoiceBank 抽成独立包

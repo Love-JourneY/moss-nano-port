@@ -1,23 +1,23 @@
 #!/bin/bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026  Nija (bubu12) and contributors
-# canto-tts module —— 自有代码,AGPL-3.0-or-later(全文见 ./LICENSE;第三方见 ./NOTICE)
+# moss-nano-port module —— 自有代码,AGPL-3.0-or-later(全文见 ./LICENSE;第三方见 ./NOTICE)
 # ---------------------------------------------------------------------------
-# vsay-canto —— 粤语播报(canto-tts-nano·男声)
+# vsay-canto —— 粤语播报(moss-nano-port-nano·男声)
 #
 # 语义与 vsay-yue 对齐:文本从参数或 stdin 进来,合成后立刻播出。
 #
 # ⚠️⚠️ 事实澄清(别误解):本命令是【多一个男声选择】,不是"提升音色"。
-#   · canto-tts 是【男声】:实测 F0 中位 102.3Hz(男声范围 85~155Hz)
+#   · moss-nano-port 是【男声】:实测 F0 中位 102.3Hz(男声范围 85~155Hz)
 #   · 平板原来那个 110MB sherpa VITS 是【女声】:234.6Hz —— 已于 2026-09-22 退役
-#     (女声补位见 ~/dev/female-canto-tts/,与本模块共用同一份权重)
-#   · canto-tts【只有一个固化音色,不能选】—— README 原话:
+#     (女声补位见 ~/dev/female-moss-nano-port/,与本模块共用同一份权重)
+#   · moss-nano-port【只有一个固化音色,不能选】—— README 原话:
 #     「單一 default voice —— ONNX 路線暫時未支援 voice cloning、冇 voice 揀」
 #
 # ══════════════════════════════════════════════════════════════════════
 # 2026-09-22 落位 4 倍加速(tts_stream.py)—— 真凶与修法
 # ══════════════════════════════════════════════════════════════════════
-# 真凶:旧版每段各起一个 `canto-tts synthesize` **新进程** ⇒ 8 个 ONNX session
+# 真凶:旧版每段各起一个 `moss-nano-port synthesize` **新进程** ⇒ 8 个 ONNX session
 #       被反复从磁盘重载。实测单段独立进程 ~4.5s、同进程内第 2 段只 ~1s ⇒
 #       **76% 的时间花在重复加载,不是推理。**
 #
@@ -43,8 +43,8 @@
 #   vsay-canto --no-daemon "..."          # 诊断用:强制走 L2/L3,不碰守护
 #
 # 环境变量:
-#   VSAY_CANTO_MODEL   模型目录(默认 /var/lib/canto-tts/model)
-#   VSAY_CANTO_VENV    venv 目录(默认 /opt/canto-tts-venv)
+#   VSAY_CANTO_MODEL   模型目录(默认 /var/lib/moss-nano-port/model)
+#   VSAY_CANTO_VENV    venv 目录(默认 /opt/moss-nano-port-venv)
 #   VSAY_CANTO_CHUNK   每段最大字数(默认 50;nano 模型对长文本会漂,切段更稳)
 #   VSAY_CANTO_MAXTOTAL 限制总字数(0=不限)
 #   VSAY_CANTO_DEADLINE 总时长上限秒数(默认 180,防超长请求啃 CPU)
@@ -52,24 +52,24 @@
 #   VSAY_CANTO_KEEP    非空则保留临时目录(调试用)
 #   VSAY_CANTO_TMPDIR  临时目录根(默认 /tmp;无 /tmp 的机器可指到别处)
 #   VSAY_CANTO_DAEMON  0 = 禁用常驻守护(只用 L2/L3)
-#   VSAY_CANTO_STREAM  tts_stream.py 的路径(默认 /opt/canto-tts/lib/tts_stream.py)
-#   VSAY_CANTO_SOCK    守护 socket 路径(默认 $XDG_RUNTIME_DIR/canto-tts.sock)
+#   VSAY_CANTO_STREAM  tts_stream.py 的路径(默认 /opt/moss-nano-port/lib/tts_stream.py)
+#   VSAY_CANTO_SOCK    守护 socket 路径(默认 $XDG_RUNTIME_DIR/moss-nano-port.sock)
 #   VSAY_CANTO_IDLE    守护空闲自动退出秒数(默认 300;0=永不退出)
 set -uo pipefail
 
-MODEL="${VSAY_CANTO_MODEL:-/var/lib/canto-tts/model}"
-VENV="${VSAY_CANTO_VENV:-/opt/canto-tts-venv}"
+MODEL="${VSAY_CANTO_MODEL:-/var/lib/moss-nano-port/model}"
+VENV="${VSAY_CANTO_VENV:-/opt/moss-nano-port-venv}"
 CHUNK="${VSAY_CANTO_CHUNK:-50}"
 MAXTOTAL="${VSAY_CANTO_MAXTOTAL:-0}"
 DEADLINE_S="${VSAY_CANTO_DEADLINE:-180}"
 # ⚠️ 优先用【安装位】的 tts_stream.py;退回开发场(免 root 就能改它调试)。
-STREAM="${VSAY_CANTO_STREAM:-/opt/canto-tts/lib/tts_stream.py}"
-[ -f "$STREAM" ] || STREAM="$HOME/Documents/repo/canto-tts/lib/tts_stream.py"
+STREAM="${VSAY_CANTO_STREAM:-/opt/moss-nano-port/lib/tts_stream.py}"
+[ -f "$STREAM" ] || STREAM="$HOME/Documents/repo/moss-nano-port/lib/tts_stream.py"
 # ⚠️ socket 放 $XDG_RUNTIME_DIR(tmpfs,重启即清,不会留陈旧文件)。
 #    ⚠️ Android 没有 /run ⇒ 那边由 VSAY_CANTO_SOCK 显式指到 /data/local/linux/。
 RUNDIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 [ -d "$RUNDIR" ] || RUNDIR="${TMPDIR:-/tmp}"
-SOCK="${VSAY_CANTO_SOCK:-$RUNDIR/canto-tts.sock}"
+SOCK="${VSAY_CANTO_SOCK:-$RUNDIR/moss-nano-port.sock}"
 IDLE="${VSAY_CANTO_IDLE:-300}"
 USE_DAEMON="${VSAY_CANTO_DAEMON:-1}"
 
@@ -95,7 +95,7 @@ if [ "${ENSURE_ONLY:-0}" != "1" ]; then
   [ -n "${TXT// /}" ] || exit 0
 fi
 
-CT="$VENV/bin/canto-tts"
+CT="$VENV/bin/moss-nano-port"
 PY="$VENV/bin/python"
 [ -x "$CT" ] || { echo "vsay-canto: 缺引擎 $CT(先跑 install.sh)" >&2; exit 1; }
 [ -d "$MODEL" ] || { echo "vsay-canto: 缺模型 $MODEL(先跑 install.sh)" >&2; exit 1; }
@@ -187,7 +187,7 @@ play_one() {
       echo "  [vsay-canto] ⚠️ 播放器 $PLAYER 驱动不了声卡(合成是成功的)" >&2
       echo "  [vsay-canto]    平板 chroot 已知问题:Android 音频 HAL 独占 /dev/snd" >&2
       echo "  [vsay-canto]    文件保留在:$SEGD/  或加 -o <路径> 自己指定" >&2
-      echo "  [vsay-canto]    详见 /opt/canto-tts/NOTES.md §7" >&2
+      echo "  [vsay-canto]    详见 /opt/moss-nano-port/NOTES.md §7" >&2
       # 失败时不让 trap 把证据删掉,留给用户
       VSAY_CANTO_KEEP=1
     fi

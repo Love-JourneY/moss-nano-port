@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026  Nija (bubu12) and contributors
 #
-# canto-tts module —— 粤语播报模块(上下配套开源项目)
+# moss-nano-port module —— 粤语播报模块(上下配套开源项目)
 # 本脚本属【本模块自有代码】,以 GNU AGPL-3.0-or-later 授权;全文见 ./LICENSE
 # ⚠️ 本模块打包/调用的第三方组件各有其许可(见 ./NOTICE),不因本文件而改变。
 # ---------------------------------------------------------------------------
@@ -35,7 +35,7 @@ done
 
 ROOT="$(ct_root)"
 ARCH="$(ct_arch)"
-[ -n "$OUT" ] || OUT="$ROOT/dist/canto-tts-module-${CT_VERSION}-${ARCH}$([ "$SLIM" = 1 ] && echo "-slim").tar.zst"
+[ -n "$OUT" ] || OUT="$ROOT/dist/moss-nano-port-module-${CT_VERSION}-${ARCH}$([ "$SLIM" = 1 ] && echo "-slim").tar.zst"
 mkdir -p "$(dirname "$OUT")"
 
 # ---------- 先做自检:缺件就不许打包(否则打出来的是个坏包) ----------
@@ -59,8 +59,8 @@ done
 [ "$n_wheels" -gt 0 ] || die "pkg/ 里没有任何轮子 —— 离线自洽不成立"
 ok "轮子合计 $n_wheels 个"
 
-if [ -d "$ROOT/models/canto-tts-nano" ]; then
-  ok "模型归档:$(du -sh "$ROOT/models/canto-tts-nano" | cut -f1)"
+if [ -d "$ROOT/models/moss-nano-port-nano" ]; then
+  ok "模型归档:$(du -sh "$ROOT/models/moss-nano-port-nano" | cut -f1)"
 else
   warn "包内无模型 ⇒ 目标机首次安装需联网(装完即离线)"
 fi
@@ -68,7 +68,7 @@ fi
 # ---------- 打包 ----------
 log "===== 打包 → $OUT ====="
 TMPD="$(mktemp -d)"; trap 'rm -rf "$TMPD"' EXIT
-STAGE="$TMPD/canto-tts"
+STAGE="$TMPD/moss-nano-port"
 mkdir -p "$STAGE"
 # ⚠️ 用 tar 管道而不是 cp -a:顺带过滤 dist/.git 这类不该进包的
 # ⚠️ 2026-09-22 加 --exclude='./docs/samples' —— 那些 A/B 对照 wav 有 6.3MB,
@@ -91,7 +91,7 @@ fi
 
 # 写一份"包内自述"—— 换机器的人第一眼看到的就是它
 cat > "$STAGE/PACK-INFO.txt" <<EOF
-canto-tts 模块包
+moss-nano-port 模块包
   版本     : $CT_VERSION
   打包时间 : $(date '+%Y-%m-%d %H:%M:%S %z')
   打包机器 : $(uname -n 2>/dev/null || echo unknown) / $(uname -m)
@@ -100,17 +100,17 @@ canto-tts 模块包
 
 怎么用:
   tar --zstd -xf $(basename "$OUT")
-  cd canto-tts
+  cd moss-nano-port
   ./install.sh            # 一条命令部署(需 root;本机纪律:走 sbrun)
   ./verify.sh --play      # 验收
   ./uninstall.sh          # 卸载
 
-⚠️ 事实澄清:canto-tts 是【男声】(F0 中位 102.3Hz),单音色不可选。
+⚠️ 事实澄清:moss-nano-port 是【男声】(F0 中位 102.3Hz),单音色不可选。
    部署它是"多一个男声选择",不是"提升音色"。详见 README.md / NOTES.md。
 EOF
 ok "已写入 PACK-INFO.txt"
 
-tar -C "$TMPD" --zstd -cf "$OUT" canto-tts || die "打包失败"
+tar -C "$TMPD" --zstd -cf "$OUT" moss-nano-port || die "打包失败"
 # ⚠️ 打包后自检:能列目录才算真包(防"打了一半")
 tar --zstd -tf "$OUT" >/dev/null 2>&1 || die "产物损坏,无法列出内容"
 ok "产物:$OUT($(du -h "$OUT" | cut -f1),$(tar --zstd -tf "$OUT" | wc -l) 项)"

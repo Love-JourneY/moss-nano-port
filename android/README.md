@@ -1,4 +1,4 @@
-# canto-tts for Android —— 便携包(AGPL-3.0)
+# moss-nano-port for Android —— 便携包(AGPL-3.0)
 
 > ## ⚠️ 2026-09-27 重大变更:**本项目已不再依赖 root**
 >
@@ -21,11 +21,11 @@
 > ⇒ App 挂一个 **1×1 透明 `TYPE_APPLICATION_OVERLAY`**(常驻)即可保持"前台可见"。
 > ⇒ 需要 `SYSTEM_ALERT_WINDOW` 特殊权限(用户授权;按 §P2 必须弹窗告知用途)。
 >
-> 旧文档里的 `/data/adb/service.d/canto-tts-daemon.sh`、`daemon-start.sh`、
+> 旧文档里的 `/data/adb/service.d/moss-nano-port-daemon.sh`、`daemon-start.sh`、
 > `tuning.properties` 的 `daemonPort` 等**均已不存在** —— 不要再按旧文操作。
 
 
-> **把 canto-tts 的 ONNX 推理搬进 Android 进程,注册成系统 TTS 引擎。**
+> **把 moss-nano-port 的 ONNX 推理搬进 Android 进程,注册成系统 TTS 引擎。**
 > **一个目录 = 全部。`cp -a` 拖到另一台机器,`./install.sh` 一条命令装好。**
 > 日期:**2026-09-24**
 
@@ -181,7 +181,7 @@ android/
 ├── install.sh / verify.sh / uninstall.sh   ← 三脚本(八条要求)
 ├── README.md                                ← 本文
 ├── device.mac                               ← 设备寻址(⚠️ MAC 优先,IP 只当回退)
-├── apk/canto-tts-engine.apk                 ← 12.0 MB,已签名
+├── apk/moss-nano-port.apk                 ← 12.0 MB,已签名
 ├── apk/AndroidManifest.xml                  ← 四件套声明(留档)
 └── model/                                   ← 684.5 MB(若随包分发)
 ```
@@ -189,7 +189,7 @@ android/
 ## 许可
 
 - **本目录脚本与文档**:AGPL-3.0-or-later(见模块根 `LICENSE`)
-- **canto-tts 权重 / MOSS-TTS-Nano / pip 包**:Apache-2.0
+- **moss-nano-port 权重 / MOSS-TTS-Nano / pip 包**:Apache-2.0
 - **ONNX Runtime**:MIT
 - **canto-hk-g2p**(G2P 的 Rust 源):Apache-2.0;其数据含 **CC BY 4.0**(rime-cantonese)
 - **音色 cv03**:Common Voice 22 yue,**CC-0**

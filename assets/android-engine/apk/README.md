@@ -1,4 +1,4 @@
-# canto-tts 系统 TTS 引擎 APK
+# moss-nano-port 系统 TTS 引擎 APK
 
 > **2026-09-24 打出:12.0 MB,已签名,含全部代码 + ORT native 库 + 小资产。**
 > **⚠️ 不含模型(684MB)—— 模型由 install.sh 推到 App 私有目录。**
@@ -43,7 +43,7 @@ $BT/d8 --lib $AJ --min-api 24 --output build/dex \
 # 5) zipalign + apksigner
 $BT/zipalign -f 4 app-unsigned.apk app-aligned.apk
 $BT/apksigner sign --ks ~/.android/debug.keystore --ks-pass pass:android \
-     --key-pass pass:android --out canto-tts-engine.apk app-aligned.apk
+     --key-pass pass:android --out moss-nano-port.apk app-aligned.apk
 ```
 
 ## 🔴 targetSdk≥30 的硬要求(装不上时的第一嫌疑)

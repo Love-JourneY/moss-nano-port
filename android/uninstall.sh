@@ -1,11 +1,11 @@
 #!/bin/bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# canto-tts for Android —— 干净移除,不留残留
+# moss-nano-port for Android —— 干净移除,不留残留
 set -uo pipefail
 TARGET="${ANDROID_SERIAL:-${2:-}}"
 [ -n "$TARGET" ] || { echo "用法: ./uninstall.sh --target <adb>"; exit 2; }
 AND="adb -s $TARGET"; PKG=canto.tts
-echo "===== 移除 canto-tts for Android ====="
+echo "===== 移除 moss-nano-port for Android ====="
 # 先把默认引擎还回去(否则系统 TTS 会哑)
 CUR=$($AND shell settings get secure tts_default_synth 2>/dev/null | tr -d '\r')
 if [ "$CUR" = "$PKG" ]; then

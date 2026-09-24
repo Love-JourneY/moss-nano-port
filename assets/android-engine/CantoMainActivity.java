@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026  Nija (bubu12) and contributors
 //
-// CantoMainActivity —— canto-tts 引擎的极简主界面。原生 Java,零依赖,不用 Kotlin。
+// CantoMainActivity —— moss-nano-port 引擎的极简主界面。原生 Java,零依赖,不用 Kotlin。
 //
 // ⚠️ 为什么这么"土"(纯 LinearLayout + Button,没有 Material/RecyclerView/协程):
 //   Nija 指示:「引擎的 GUI 用原生 Java 做,极简不用 Kotlin」
@@ -68,7 +68,7 @@ public class CantoMainActivity extends Activity {
         root.setPadding(p, p, p, p);
 
         root.addView(tagLine("MOSS-TTS-NANO · 下游配套引擎"));
-        root.addView(title("canto-tts"));
+        root.addView(title("moss-nano-port"));
 
         status = new TextView(this);
         status.setTextSize(14);

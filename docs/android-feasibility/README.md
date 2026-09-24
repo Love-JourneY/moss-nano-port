@@ -1,6 +1,6 @@
 # Android 可行性验证产物(2026-09-22)
 
-> **本目录回答一个问题:能不能在 Android 上进程内跑 canto-tts 的 ONNX 推理?**
+> **本目录回答一个问题:能不能在 Android 上进程内跑 moss-nano-port 的 ONNX 推理?**
 > 结论:**能,而且是【逐样本对得上】的那种能。**
 
 ## 为什么这些产物值得收进开源仓库
@@ -60,5 +60,5 @@ should_continue 由图内采样推出 ⇒ 时长会波动(实测 7.52/7.12/9.76s
 ```bash
 # 本目录的 APK 可直接装(无 UI 的 Service,跑完看 logcat)
 adb install -r canto-probe.apk
-# 完整构建脚本见原工程:~/dev/android-canto-tts/{build.sh,build-apk.sh,deploy.sh}
+# 完整构建脚本见原工程:~/dev/android-moss-nano-port/{build.sh,build-apk.sh,deploy.sh}
 ```

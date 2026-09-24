@@ -1,6 +1,6 @@
 # NOTICE —— 第三方组件与许可清单
 
-> 本文件逐项列出 canto-tts 模块【打包/调用/依赖】的第三方组件及其许可。
+> 本文件逐项列出 moss-nano-port 模块【打包/调用/依赖】的第三方组件及其许可。
 > **原则**:上游许可【不因本模块而改变】;我们只声明的【自有代码】用 AGPL-3.0。
 > 核对日期:**2026-09-28**(许可会变,用前请复核上游)
 >
@@ -12,18 +12,18 @@
 
 | 组件 | 来源 | 许可 | 备注 |
 |---|---|---|---|
-| `canto-tts-nano-v1`(粤语 TTS 权重) | `typangaa/canto-tts-nano`(HuggingFace)/ GitHub `typangaa/canto-tts` | **Apache-2.0** | 模型卡自带 `license: apache-2.0` |
-| `MOSS-TTS-Nano`(基座,0.1B) | `OpenMOSS-Team/MOSS-TTS-Nano-100M` / MOSI.AI + OpenMOSS | **Apache-2.0** | canto-tts 由它微调而来 |
+| `moss-nano-port-nano-v1`(粤语 TTS 权重) | `typangaa/moss-nano-port-nano`(HuggingFace)/ GitHub `typangaa/moss-nano-port` | **Apache-2.0** | 模型卡自带 `license: apache-2.0` |
+| `MOSS-TTS-Nano`(基座,0.1B) | `OpenMOSS-Team/MOSS-TTS-Nano-100M` / MOSI.AI + OpenMOSS | **Apache-2.0** | moss-nano-port 由它微调而来 |
 | **`MOSS-TTS-Nano-100M-ONNX`**(基础版) | `OpenMOSS-Team/MOSS-TTS-Nano-100M-ONNX`(HuggingFace) | **Apache-2.0** | ★ 2026-09-28 加:普通话/英文/日语用。【可选】,见 README 的下载说明 |
 | **SentencePiece 词表** | 从上面这个模型的 `tokenizer.model` 导出(`assets/android-tok/sp-vocab-16384.tsv`) | **Apache-2.0**(随模型) | 我们只做了格式转换(protobuf → TSV),**未改内容** |
 | `MOSS-Audio-Tokenizer-Nano`(codec) | 同上(MOSS 家族) | **Apache-2.0** | ⚠️ 与 MOSS-TTS-Nano 同源 |
-| ⚠️ **训练数据** | canto-tts 作者自述「訓練數據:私有來源(因為 copyright 唔公開)」 | **不公开** | ⇒ **我们无法核实其数据合规性;只按模型卡声明的 Apache-2.0 使用权重** |
+| ⚠️ **训练数据** | moss-nano-port 作者自述「訓練數據:私有來源(因為 copyright 唔公開)」 | **不公开** | ⇒ **我们无法核实其数据合规性;只按模型卡声明的 Apache-2.0 使用权重** |
 
 ## 一之二、本引擎支持的语言(2026-09-28)
 
 | 语言 | 模型 | 音色数 | 音色来源 |
 |---|---|---|---|
-| **粤语** | `canto-tts-nano`(微调) | 7 | `voicebank/` |
+| **粤语** | `moss-nano-port-nano`(微调) | 7 | `voicebank/` |
 | **普通话** | `MOSS-TTS-Nano-100M-ONNX`(基础版) | 6 | `builtin_voices` |
 | **英文** | 同上 | 5 | `builtin_voices` |
 | **日语** | 同上 | 7 | `builtin_voices` |
@@ -46,7 +46,7 @@
 |---|---|
 | ONNX Runtime | **MIT** |
 | Python(≥3.11)· 标准库 | PSF-2.0 |
-| `canto-hk-g2p`(粤语 G2P,rust) | 随 canto-tts 包(见其 METADATA) |
+| `canto-hk-g2p`(粤语 G2P,rust) | 随 moss-nano-port 包(见其 METADATA) |
 | `numpy` / `soundfile` 等(见 `pkg/`) | 各自许可(BSD/MIT 等),逐项见 `pkg/` 内 wheel 的 METADATA |
 | `sherpa-onnx`(**仅历史遗留**,已退役) | Apache-2.0 |
 
@@ -64,5 +64,5 @@
 1. **商业使用**:模型 Apache-2.0 ✅ 可商用;我们的代码 AGPL-3.0(AGPL 要求**衍生作品也 AGPL**,
    且**网络服务**也触发开源义务 ⇒ 若你把它做成在线服务,须提供源码)。
 2. **再分发**:请**同时带上本 NOTICE + LICENSE**,并保留上游的许可声明。
-3. **训练数据**:canto-tts 权重的训练数据**不公开** ⇒ 我们只保证"按模型卡声明的许可使用权重",
+3. **训练数据**:moss-nano-port 权重的训练数据**不公开** ⇒ 我们只保证"按模型卡声明的许可使用权重",
    **不能替上游担保其训练数据的合规性**。

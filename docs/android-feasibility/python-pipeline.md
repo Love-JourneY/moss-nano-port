@@ -1,13 +1,13 @@
-# canto-tts Python 参考实现 → Android 推理调用序列说明书
+# moss-nano-port Python 参考实现 → Android 推理调用序列说明书
 
-> **用途**:把现有 Python 实现(`canto-tts 0.1.4` + 厂商 vendored 的 `ort_cpu_runtime.py`)逆向成
+> **用途**:把现有 Python 实现(`moss-nano-port 0.1.4` + 厂商 vendored 的 `ort_cpu_runtime.py`)逆向成
 > **精确到张量名 / 形状 / dtype** 的调用契约,供后续用 Java/Kotlin + `onnxruntime-android` 重写。
 >
 > **阅读约定**
 > - 所有源码引用格式为 `文件:行号`,路径以仓库根为基准:
->   - `PKG/` = `/opt/canto-tts-venv/lib/python3.14/site-packages/canto_tts/`
->   - `LIB/` = `/opt/canto-tts/lib/`
->   - `MODEL/` = `/var/lib/canto-tts/model/`
+>   - `PKG/` = `/opt/moss-nano-port-venv/lib/python3.14/site-packages/canto_tts/`
+>   - `LIB/` = `/opt/moss-nano-port/lib/`
+>   - `MODEL/` = `/var/lib/moss-nano-port/model/`
 > - 形如 `int32[1,N,17]` 的形状,**标 `(meta)` 的来源是厂商随包的 `*_browser_onnx_meta.json`;
 >   标 `(onnx)` 的是本次**静态解析 `.onnx` protobuf 图头**实测得到(未加载权重);
 >   标 `(源码)` 的是从 Python 代码推出。
@@ -29,7 +29,7 @@
 | 行宽 | **row_width = 17 = n_vq + 1** | 见 §2.4 |
 | 词表 | **16472**(基础 SP 词表 16384 + 88 个音素特殊 token) | `model_config.vocab_size`;`MODEL/added_tokens.json` |
 | 模型总体积 | 729 MB(TTS 640 MiB + codec 86 MiB) | `NOTES.md:53`、`ls -l` |
-| ORT 版本 | onnxruntime **1.30.0** | `/opt/canto-tts-venv/.../onnxruntime-1.30.0.dist-info` |
+| ORT 版本 | onnxruntime **1.30.0** | `/opt/moss-nano-port-venv/.../onnxruntime-1.30.0.dist-info` |
 | 默认线程 | **4**(实测最优;8/12 反而慢数倍) | `PKG/backends/onnx_backend.py:124`、`NOTES.md:433-440` |
 | 默认最大帧数 | **375 帧 = 30 s** | `browser_poc_manifest.json` `generation_defaults.max_new_frames` |
 
@@ -107,7 +107,7 @@ def _session(self, path_value: Path) -> ort.InferenceSession:
 
 > ⚠️ **原始事故**(`NOTES.md:25-54`):HF 缓存 `snapshots/<sha>/` 里全是符号链接指向 `blobs/<sha>/`,
 > `.onnx` 落到 `blobs/54/`、`.data` 落到 `blobs/b0/` ⇒ ORT 判定"逃逸出模型目录",**直接拒绝加载**。
-> 解法是 `cp -rL` 实体化到平坦目录(`/var/lib/canto-tts/model`),`NOTES.md:53` 记「HF 缓存看着 86MB,
+> 解法是 `cp -rL` 实体化到平坦目录(`/var/lib/moss-nano-port/model`),`NOTES.md:53` 记「HF 缓存看着 86MB,
 > 实体化后 729MB —— 不是下多了,是 `du` 不跟随符号链接少算了」。
 
 **Android 移植要点**:
@@ -800,7 +800,7 @@ _be._default_voice_codes = req.get("voice_codes") or default_voice_codes
 _be._runtime.rng = np.random.default_rng(int(req["seed"]))
 ```
 
-`/var/lib/canto-tts/voicebank/` 下有 6 个档案:`cv01`(48 帧)、`cv02`、`cv03`、`cv04`、
+`/var/lib/moss-nano-port/voicebank/` 下有 6 个档案:`cv01`(48 帧)、`cv02`、`cv03`、`cv04`、
 `qwen_hk`、`qwen_short`。档案结构:
 ```json
 {"voice":"cv01", "prompt_audio_codes": [[…16…] × 48], "n_frames":48,
@@ -811,10 +811,10 @@ _be._runtime.rng = np.random.default_rng(int(req["seed"]))
 > `timbre_ref`(74 维)**在本模块代码里没有任何消费点**(grep 零命中)⇒ 是部署期/评测期的旁路元数据,
 > 与 ONNX 推理无关。**Android 侧只需要 `prompt_audio_codes`。**
 
-### 5.5 `/opt/canto-tts/assets/` 里有什么?
+### 5.5 `/opt/moss-nano-port/assets/` 里有什么?
 
 ```
-/opt/canto-tts/assets/
+/opt/moss-nano-port/assets/
 └── android/
     ├── CantoPlay.java      (130 行,零 UI 的 AudioTrack WAV 播放器)
     ├── canto-play.jar      (d8 编译产物)
@@ -823,7 +823,7 @@ _be._runtime.rng = np.random.default_rng(int(req["seed"]))
 
 **没有**参照 wav、没有默认音色 wav、没有词典。`CantoPlay.java` 是**播放**侧的参考实现
 (不是推理),价值点:
-- `:34-63` RIFF **按 chunk 遍历**解析(不能假设 `data` 在固定偏移 —— canto-tts 输出的 wav 带 `LIST`/`fact` 块);
+- `:34-63` RIFF **按 chunk 遍历**解析(不能假设 `data` 在固定偏移 —— moss-nano-port 输出的 wav 带 `LIST`/`fact` 块);
 - `:89-101` `AudioTrack.Builder` 参数(USAGE_MEDIA / CONTENT_TYPE_SPEECH / MODE_STREAM);
 - `:111-117` 必须**分块 write**(一次 write 太大在部分机型被截断);
 - `:118-119` **播完必须 `stop()` 排空,否则尾音被切**(实测少 ~0.3s)。
@@ -1087,7 +1087,7 @@ codec_decode_step           ← codec_meta.files.decode_step            = moss_a
 
 | 项 | 说明 |
 |---|---|
-| **只读** | 未修改 `/opt/canto-tts/**`、`/var/lib/canto-tts/**`、`/opt/canto-tts-venv/**` 任何文件 |
+| **只读** | 未修改 `/opt/moss-nano-port/**`、`/var/lib/moss-nano-port/**`、`/opt/moss-nano-port-venv/**` 任何文件 |
 | **未安装任何包** | venv 里**没有** `onnx` 包(实测 `ModuleNotFoundError`)。本次用的 `.onnx` 图头解析器是**现场手写的 protobuf wire-format 解析器**(`/tmp/onnxprobe.py`、`/tmp/constprobe.py`),只读 `.onnx` 容器(几十~几百 KB),**不触碰 `.data` 权重文件** |
 | **未加载模型** | 全程无 `InferenceSession` 构造。`NOTES.md:512-515` 明确提示「venv 里没有 onnx 包;要读算子集合得 `pip install --target /tmp/qv onnx`,**别往 venv 装**」—— 本次**没有装**,改用自写解析器 |
 | **形状/dtype 来源** | 标 `(onnx)` 的 = 图头 `graph.input`/`graph.output` 的 `TypeProto` 实测;标 `(meta)` 的 = `*_browser_onnx_meta.json`;标 `(源码)` 的 = Python 代码 |

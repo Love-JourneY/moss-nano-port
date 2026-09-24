@@ -1,6 +1,6 @@
 #!/bin/bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# canto-tts for Android —— 验收。判据是【可观测事实】,不是"看着像好了"。
+# moss-nano-port for Android —— 验收。判据是【可观测事实】,不是"看着像好了"。
 set -uo pipefail
 TARGET="${ANDROID_SERIAL:-${2:-}}"
 [ -n "$TARGET" ] || { echo "用法: ./verify.sh --target <adb>"; exit 2; }
@@ -13,7 +13,7 @@ bad(){ printf '  ❌ %s —— %s\n' "$1" "$2"; FAIL=$((FAIL+1)); }
 chk(){ [ "$2" = "$3" ] && ok "$1" "$2" || bad "$1" "期望 $3,实到 $2"; }
 say(){ printf '  %s\n' "$*"; }
 
-echo "===== canto-tts for Android 验收 ====="
+echo "===== moss-nano-port for Android 验收 ====="
 chk "设备在线" "$($AND get-state 2>/dev/null | tr -d '\r')" "device"
 chk "APK 已安装" "$($AND shell pm list packages 2>/dev/null | grep -c "$PKG" | tr -d '\r')" "1"
 # ⚠️ 用【是否出现在引擎清单里】判断,而不是数行数(query-services 输出多行)

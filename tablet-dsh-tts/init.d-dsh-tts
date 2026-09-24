@@ -5,7 +5,7 @@
 # 【它是什么 / 为什么需要】
 #   DSH 界面上的 🔊 按钮(插件 dsh-tts 的 client.js)点下去会先:
 #       POST http://127.0.0.1:8790/speak  {"text": "..."}
-#   本服务收到后调 /usr/local/bin/vsay ⇒ canto-tts 粤语【男声】⇒ Android 出声。
+#   本服务收到后调 /usr/local/bin/vsay ⇒ moss-nano-port 粤语【男声】⇒ Android 出声。
 #   ⚠️ 关键:服务不在时,客户端会【静默】退回浏览器 speechSynthesis(落到 Android
 #      系统 TTS 引擎)—— 用户完全分不出"没装"和"没跑"。所以这个服务必须开机就在。
 #
@@ -17,7 +17,7 @@
 #
 # ⚠️ 环境要点(踩过,别删):
 #   1. Android 的 TMPDIR=/data/local/tmp 会被隐式带进 chroot,而该目录在 chroot 里
-#      【不存在】⇒ 这里显式 TMPDIR=/tmp(与 /etc/profile.d/canto-tts.sh 一致)。
+#      【不存在】⇒ 这里显式 TMPDIR=/tmp(与 /etc/profile.d/moss-nano-port.sh 一致)。
 #   2. node 在 /opt/node-v24.9.0/bin,不是 $PATH 默认值 ⇒ 必须显式写进 PATH。
 #   3. /run 在 **chroot 内**存在且可写 ⇒ pid 放 /run 符合 FHS。
 #      (纪律里"这台 Android 没有 /run"说的是 **Android 侧**;chroot 侧有。)
@@ -63,7 +63,7 @@ start_it() {
   )
   sleep 1
   if is_up; then
-    echo "  ✅ dsh-tts 启动 :$PORT(DSH 🔊 → canto-tts 粤语男声)"
+    echo "  ✅ dsh-tts 启动 :$PORT(DSH 🔊 → moss-nano-port 粤语男声)"
   else
     echo "  ❌ dsh-tts 启动失败:"
     tail -5 "$LOG" 2>/dev/null | sed 's/^/     /'
@@ -91,7 +91,7 @@ case "${1:-}" in
   restart) stop_it; sleep 1; start_it ;;
   status)
     if is_up; then
-      echo "  ✅ dsh-tts :$PORT(DSH 🔊 已接通 canto-tts)"
+      echo "  ✅ dsh-tts :$PORT(DSH 🔊 已接通 moss-nano-port)"
       if [ -f "$PIDF" ]; then echo "     pid=$(cat "$PIDF")"; fi
       echo -n "     health: "; curl -s -m 3 "http://127.0.0.1:$PORT/health" 2>/dev/null || echo "(curl 不可用)"
       echo

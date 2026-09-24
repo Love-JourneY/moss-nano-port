@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026  Nija (bubu12) and contributors
-# canto-tts module —— 自有代码,AGPL-3.0-or-later(全文见 ./LICENSE;第三方见 ./NOTICE)
+# moss-nano-port module —— 自有代码,AGPL-3.0-or-later(全文见 ./LICENSE;第三方见 ./NOTICE)
 # ---------------------------------------------------------------------------
 # -*- coding: utf-8 -*-
-"""cer_eval.py —— 用【粤语 ASR】客观量 canto-tts 的 CER,并产出人耳 A/B 音频
+"""cer_eval.py —— 用【粤语 ASR】客观量 moss-nano-port 的 CER,并产出人耳 A/B 音频
 
 为什么需要它(以及它【量不出】什么):
     · "听起来地道"这句话不可证伪 ⇒ 必须有一把客观尺子。
-      尺子 = `alvanlii/whisper-small-cantonese`(与 canto-tts 官方评测同一把)。
+      尺子 = `alvanlii/whisper-small-cantonese`(与 moss-nano-port 官方评测同一把)。
     · ⚠️ 但 CER 量的是【字对不对】,**量不出"地道不地道"**。
       普→粤转换之后,CER 只可能"不变差"或"变差"——
       因为参考文本也跟着变了。所以:
@@ -37,8 +37,8 @@ import wave
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 
-CANTO = "/opt/canto-tts-venv/bin/canto-tts"
-MODEL = "/var/lib/canto-tts/model"
+CANTO = "/opt/moss-nano-port-venv/bin/moss-nano-port"
+MODEL = "/var/lib/moss-nano-port/model"
 P2Y = os.path.join(os.path.dirname(ROOT), "voice-tts", "backend", "p2y.py")
 ASR_MODEL = "alvanlii/whisper-small-cantonese"
 
@@ -70,7 +70,7 @@ def p2y(text):
 
 
 def synth(text, out_wav):
-    """用 canto-tts 合成。返回 True/False。"""
+    """用 moss-nano-port 合成。返回 True/False。"""
     for attempt in (1, 2):
         r = subprocess.run([CANTO, "synthesize", text, "-o", out_wav, "--checkpoint", MODEL],
                            capture_output=True, text=True, timeout=300)

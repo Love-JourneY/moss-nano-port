@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// canto-tts 引擎 —— 【模型注册表】(2026-09-28)
+// moss-nano-port 引擎 —— 【模型注册表】(2026-09-28)
 //
 // Nija 要求:「还有选模型的,import 模型的能力要有哦,自动依据模型支持的音色选等」
 //

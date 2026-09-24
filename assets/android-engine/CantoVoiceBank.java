@@ -32,7 +32,7 @@ public final class CantoVoiceBank {
      *   · 来源:MOSS-TTS-Nano 模型内置的 default_voice(零参照音频)
      *   · 从 browser_poc_manifest.json 的 default_voice.prompt_audio_codes 导出(44 帧 × 16)
      *   · 之前测的是 cv03(Common Voice 女声)—— 那是"可选音色"之一
-     *   · Nija 指示:"用 canto-tts 的原版男声,测试实战"
+     *   · Nija 指示:"用 moss-nano-port 的原版男声,测试实战"
      */
     public static final String DEFAULT_VOICE = "male-default";
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026  Nija (bubu12) and contributors
-# canto-tts module —— 自有代码,AGPL-3.0-or-later(全文见 ./LICENSE;第三方见 ./NOTICE)
+# moss-nano-port module —— 自有代码,AGPL-3.0-or-later(全文见 ./LICENSE;第三方见 ./NOTICE)
 # ---------------------------------------------------------------------------
 # ═══════════════════════════════════════════════════════════════════════════
 # gezai-speak.sh —— 格仔(一加平板 2 Pro / Android 16 + Debian 13 chroot)
@@ -24,7 +24,7 @@
 #      2026-09-22 已用 mCurrentFocus 证明播放前后焦点都不是它)。
 #      **必须先征得机器主人(Nija)同意** —— 这正是 --consent 开关存在的理由。
 #   2. 不加 --consent:只做「合成 + 落盘 + 取证快照」,**绝不触发播放**。
-#   3. 不删别人的任何文件;生产模型 /var/lib/canto-tts/model 只读。
+#   3. 不删别人的任何文件;生产模型 /var/lib/moss-nano-port/model 只读。
 #
 # 用法
 #   ./gezai-speak.sh "今日天氣幾好"                     # 只合成 + 落盘(安全,不触发)
