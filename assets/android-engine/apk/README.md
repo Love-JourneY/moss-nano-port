@@ -42,7 +42,7 @@ $BT/d8 --lib $AJ --min-api 24 --output build/dex \
 #    见 build-apk.py —— 本机【没有 zip 命令】,用 python zipfile
 # 5) zipalign + apksigner
 $BT/zipalign -f 4 app-unsigned.apk app-aligned.apk
-$BT/apksigner sign --ks ~/.android/debug.keystore --ks-pass pass:android \
+$BT/apksigner sign --ks <内部路径> --ks-pass pass:android \
      --key-pass pass:android --out moss-nano-port.apk app-aligned.apk
 ```
 

@@ -173,7 +173,7 @@ fi
 
 # ⑥ ⚠️ 2026-09-27:守护与开机自启【已彻底移除】——
 #   实测无 root 时 App 自己跑推理 [S7]1266ms/[S9]1811ms,与 root 守护(1270/1745)几乎一样
-#   ⇒ 不再需要 root。详见 VOICE.md §9 与 android/README.md。
+#   ⇒ 不再需要 root。详见 语音体系文档 §9 与 android/README.md。
 #   (App 侧靠【常驻 overlay】避免被 ColorOS virtualFreeze 冻)
 
 # ⑦ 设为默认 TTS 引擎

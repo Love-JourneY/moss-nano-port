@@ -10,7 +10,7 @@
 > 模块版本:`0.1.4-module.1` · 最后更新:2026-09-22
 
 > 📚 **想搞懂"这东西先不先进 / 为什么好 / 音色怎么换 / 能不能更快 / 开源世界走到哪一步"**
-> —— 看 **`~/Documents/system-maintenance/notes/2026-09-22-语音模型技术路线知识库.md`**。
+> —— 看 **`<内部笔记>/2026-09-22-语音模型技术路线知识库.md`**。
 > 那份是**技术路线知识库(带时间戳快照)**,回答的是"为什么"和"往哪走";
 > 本文件回答的是"**我们实际踩过哪些坑、数字是多少**"。两份**互补,不是重复**。
 > ⚠️ 那份文档里记了 **3 处与本文旧结论冲突的更正**(sherpa 新架构 / MOSS v1.5 原生粤语 /
@@ -49,8 +49,8 @@ moss-nano-port **只有一个固化音色,不能选**(官方 README:「單一 de
 Error: [ONNXRuntimeError] : 1 : FAIL : External data path validation failed for
 initializer: core.model.transformer.wte.weight. Error: External data path escapes
 model directory. External data path: "moss_tts_global_shared.data" resolved path:
-"~/.cache/huggingface/hub/blobs/b0/b051...d3b0" allowed directory:
-"~/.cache/huggingface/hub/blobs/54"
+"<内部路径>" allowed directory:
+"<内部路径>"
 ```
 
 **根因**
@@ -63,7 +63,7 @@ ONNX 载入模型时会做 external-data 路径安全校验:**只允许外部数
 把模型**实体化**到一个平坦目录 —— `cp -rL` 解引用所有符号链接:
 
 ```bash
-SNAP=$(ls -d ~/.cache/huggingface/hub/models--typangaa--canto-tts-nano/snapshots/*/ | head -1)
+SNAP=$(ls -d <内部路径>*/ | head -1)
 cp -rL "$SNAP" /var/lib/moss-nano-port/model      # ⚠️ -L 是关键,不能省
 ```
 
@@ -314,7 +314,7 @@ Nija 明确抱怨过「**老是在弹我平板上的语音输入设置**」—�
 - **不要动** `voice-tts` / `android-voice-ime` 的现有代码(那是已验收的其它线)。
 - **`.bak` 备份不能放在 Android 的 `res/` 目录** —— AAPT 会 BUILD FAILED(整个 APK 编译失败)。
 - **禁止 `pgrep -f` / `pkill -f` 匹配可能出现在自己命令行里的模式** —— 会把自己的 shell 杀掉。
-- 模块**不写** `/etc/profile.d/`、**不改** `~/.bashrc`、**不建** systemd 单元 —— 零全局污染。
+- 模块**不写** `/etc/profile.d/`、**不改** `<内部路径>`、**不建** systemd 单元 —— 零全局污染。
 - 平板的 `/run` 不存在 ⇒ pid/socket 一律用 `/data/local/linux/`(本模块不需要常驻进程,故不涉及)。
 - **本机提权一律走 `sbrun`**(不要 sudo/pkexec)。
   ⚠️ 每次 `install.sh` / `uninstall.sh` 都会**弹一次平板批准** —— 这是设计如此,不是 bug。
@@ -691,12 +691,12 @@ $ VSAY_YUE_DEADLINE=0 bash -x /usr/local/bin/vsay -m zhll "測試文字"
 >
 > **判据怎么取(客观,不靠"我感觉")**:
 > `vsay` 与 `vsay-yue` 已内置**用量记账**(2026-09-22 加),写在
-> `${XDG_STATE_HOME:-~/.local/state}/vsay-usage.log`,每行 `时间<TAB>引擎<TAB>正文前24字`:
+> `${XDG_STATE_HOME:-<内部路径>}/vsay-usage.log`,每行 `时间<TAB>引擎<TAB>正文前24字`:
 > ```bash
 > # 数 qwen3 这条线还剩多少人在用(3 个月内应为 0 行)
-> awk -F'\t' '$2 ~ /qwen3/ {n++} END{print n+0}' ~/.local/state/vsay-usage.log
+> awk -F'\t' '$2 ~ /qwen3/ {n++} END{print n+0}' <内部路径>
 > # 看默认切换是否真的生效(canto 应远多于 qwen3)
-> awk -F'\t' '{c[$2]++} END{for(k in c) print c[k], k}' ~/.local/state/vsay-usage.log | sort -rn
+> awk -F'\t' '{c[$2]++} END{for(k in c) print c[k], k}' <内部路径> | sort -rn
 > ```
 > ⚠️ **不要用 `journalctl --user -u dsh-tts | grep qwen3` 当判据** ——
 > dsh-tts 只记它自己的 `model=zhll` 参数,**区分不出实际走了哪个引擎**,那样会得出错误结论。
@@ -711,7 +711,7 @@ $ VSAY_YUE_DEADLINE=0 bash -x /usr/local/bin/vsay -m zhll "測試文字"
 ```bash
 # ── 第 0 步:先确认真的没人用(必须先做,别跳)──
 grep -rn --exclude='*.bak' 'vsay-yue\|qwen3-tts' \
-  /usr/local/bin /opt/moss-nano-port /etc <内部模块> ~/.config/systemd 2>/dev/null
+  /usr/local/bin /opt/moss-nano-port /etc <内部模块> <内部路径> 2>/dev/null
 # 期望:只剩 /usr/local/bin/vsay-yue 自己 + vsay 的 qwen3 分支(那是"可选",不是"依赖")
 
 # ── 第 1 步:改名降级(不删,只让它不再是任何默认)──
@@ -794,7 +794,7 @@ qwen3 一归档,`vsay-yue` 就**不存在** ⇒ 这两条从"保命"变成"**保
 #### 顺手修掉的一个潜在坑
 
 旧 `engines/qwen3-tts-hk/engine.conf` 的 `PRIORITY=100` **高于** canto 的 95 ⇒
-一旦 `~/.config/voice-tts/engine` 丢失,调度器会**自动选到 qwen3**。
+一旦 `<内部路径>` 丢失,调度器会**自动选到 qwen3**。
 归档后 canto(95)成为最高优先级 ⇒ **这个坑消失**。
 
 #### ⚠️ 派生音色不受影响(重要澄清)
@@ -812,7 +812,7 @@ qwen3 一归档,`vsay-yue` 就**不存在** ⇒ 这两条从"保命"变成"**保
 | **`backend/p2y.py` + `/usr/local/bin/p2y`** | 普→粤**纯规则表**,与 qwen3 无关;被 **Android IME 的 `P2Y.kt`** 依赖(有逐字一致性单测);⚠️ 另有 agent 正在扩词表,**不许动** |
 | **`Qwen3-ASR 0.6B`** | ⚠️ **完全不同的模型** —— 那是**语音识别(ASR)**,属 voice-input 模块 |
 | **`<开发场>/female-moss-nano-port/refs/ref_qwen3hk_female.wav`** | 女声克隆的**参考音频素材**(1.1MB),是 female-moss-nano-port 自己的资产 |
-| **用量记账 `~/.local/state/vsay-usage.log`** | 退役后仍保留 —— 它现在是**史册**,记录"退役前 qwen3 还有没有人在用"这个客观事实。**不清空、不改写** |
+| **用量记账 `<内部路径>`** | 退役后仍保留 —— 它现在是**史册**,记录"退役前 qwen3 还有没有人在用"这个客观事实。**不清空、不改写** |
 | **`/usr/local/bin/vsay-canto` 第 4 行注释** | 提到 `vsay-yue` 只是设计对称性说明;⚠️ 该文件 md5 被 Nija 冻结(`8071d81b…`),**不许改** |
 
 #### 一键恢复
@@ -853,7 +853,7 @@ qwen3 一归档,`vsay-yue` 就**不存在** ⇒ 这两条从"保命"变成"**保
 
 | 位置 | 路径 | 体积 |
 |---|---|---|
-| 笔记本·运行时 | `~/.local/share/sherpa-onnx-tts/vits-cantonese-hf-xiaomaiiwn/` | 110M |
+| 笔记本·运行时 | `<内部路径>` | 110M |
 | 笔记本·归档 | `<内部仓库>/tts-models/payload/vits-cantonese-hf-xiaomaiiwn.tar.bz2` | 103M |
 | 笔记本·模型库 | `<内部仓库>/tts-models/models/yue/vits-cantonese-hf-xiaomaiiwn/` | 110M |
 | 笔记本·APK | `<内部仓库>/tts-models/apk/…-yue-tts-engine-vits-cantonese-hf-xiaomaiiwn.apk` | 118M |

@@ -15,7 +15,7 @@
 //     '你好，世界。'            ⚠️ 全角逗号处不同( normalize 规则未完全复刻 )
 //     'OpenMOSS Team is ...'    ⚠️ 长英文词的分词不同(贪心 vs unigram 概率)
 //   ⇒ 命中约 4/6。对 TTS 而言分词偏差 ⇒ 韵律略不同,但句子仍可听懂。
-//   ⇒ 正解是把 SentencePiece 编进 NDK 库(见 VOICE.md §10),这里是【过渡实现】。
+//   ⇒ 正解是把 SentencePiece 编进 NDK 库(见 语音体系文档 §10),这里是【过渡实现】。
 //
 // 词表来源:assets/android-tok/sp-vocab-16384.tsv(由 tokenizer.model 导出,16384 条)
 package canto;

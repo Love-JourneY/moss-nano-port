@@ -43,7 +43,7 @@ chk "模型属主 = App uid" "$OWN" "$APPUID"
 echo
 echo "  --- 🕊️ root 依赖已移除(2026-09-27)---"
 echo "     实测:无 root 时 App 自己跑 [S7]1266ms/[S9]1811ms,与 root 守护(1270/1745)几乎一样"
-echo "     ⇒ 守护进程 / 开机自启 / root 提示 均已删除。见 VOICE.md §9"
+echo "     ⇒ 守护进程 / 开机自启 / root 提示 均已删除。见 语音体系文档 §9"
 echo "     ⚠️ 不被 ColorOS virtualFreeze 冻,靠的是【常驻 1×1 透明 overlay】"
 echo
 

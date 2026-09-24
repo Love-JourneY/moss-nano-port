@@ -76,7 +76,7 @@ while read -r l; do [ -n "$l" ] && p2y "$l"; done < tests/cases.txt > tests/expe
 资产目录:  assets/android-engine/rootgate/com/bbsoy/rootgate/RootGate.java
   ⚠️ 原「root 网关」模块(~Documents/repo/android-rootgate/)已于 2026-09-28 【整体退役删除】。
      本 App 现【不依赖 root】—— 进程内推理 + 常驻透明 overlay 防冻,详见 NOTES.md §去 root。
-依据:      ~/AGENTS.md §P2(依赖 root 的自研 App 必须弹窗告知,不许静默失败)
+依据:      <内部路径> §P2(依赖 root 的自研 App 必须弹窗告知,不许静默失败)
 ```
 
 **⇒ 以后新 App 也用这一份,别再各写各的。**

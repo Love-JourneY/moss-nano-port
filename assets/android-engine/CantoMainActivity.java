@@ -125,7 +125,7 @@ public class CantoMainActivity extends Activity {
         sc.addView(root);
         setContentView(sc);
         refresh();
-        // ⚠️ 按 ~/AGENTS.md §P2:【依赖 root 的自研 App 必须弹窗告知,不许静默失败】
+        // ⚠️ 按 <内部路径> §P2:【依赖 root 的自研 App 必须弹窗告知,不许静默失败】
         //     不再在本类里自己写一套(那样每个 App 各写各的,Nija 明确反对)。
         // ⚠️ 2026-09-27 已移除 root 依赖(不再申请/使用 root)
 
@@ -499,7 +499,7 @@ public class CantoMainActivity extends Activity {
         return b;
     }
 
-    /** 统一的弹窗(关键路径【不用 Toast】—— 见 ~/AGENTS.md §P2) */
+    /** 统一的弹窗(关键路径【不用 Toast】—— 见 <内部路径> §P2) */
     private void dialog(String title, String msg) {
         CantoTheme.dialogBuilder(this)
                 .setTitle(title).setMessage(msg)
