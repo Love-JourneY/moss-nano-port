@@ -10,7 +10,7 @@
 # ⚠️⚠️ 事实澄清(别误解):本命令是【多一个男声选择】,不是"提升音色"。
 #   · moss-nano-port 是【男声】:实测 F0 中位 102.3Hz(男声范围 85~155Hz)
 #   · 平板原来那个 110MB sherpa VITS 是【女声】:234.6Hz —— 已于 2026-09-22 退役
-#     (女声补位见 ~/dev/female-moss-nano-port/,与本模块共用同一份权重)
+#     (女声补位见 <开发场>/female-moss-nano-port/,与本模块共用同一份权重)
 #   · moss-nano-port【只有一个固化音色,不能选】—— README 原话:
 #     「單一 default voice —— ONNX 路線暫時未支援 voice cloning、冇 voice 揀」
 #

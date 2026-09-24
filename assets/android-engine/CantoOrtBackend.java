@@ -3,7 +3,7 @@
 //
 // CantoOrtBackend —— 真 ONNX Runtime 推理后端(实现 CantoSynthesizer.Backend)。原生 Java。
 //
-// ⚠️ 来源:本类是从已验证的原型 `~/dev/android-moss-nano-port/probe/CantoEngine.java`(300 行,
+// ⚠️ 来源:本类是从已验证的原型 `<原型工程>/probe/CantoEngine.java`(300 行,
 //    平板实测【逐样本吻合 Python 参照实现】)【参数化】而来。改动只有三处:
 //      ① 文本 token ids 从【烘死的常量】→【方法参数】(由 G2P + 音节表算)
 //      ② 音色 codes   从【烘死的常量】→【方法参数】(由音色库给)

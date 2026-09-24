@@ -25,7 +25,7 @@ Aborted   (RC=134)
 不是环境配错。详见 `NOTES.md §7`。
 
 ⇒ **正路是做进一个 Android App**(`AudioTrack` 直接在 App 进程里用),
-   也就是 `~/Documents/repo/voice-tts/docs/平板粤语TTS-自播放方案.md` 的「方案 C」。
+   也就是 `<内部模块>/docs/平板粤语TTS-自播放方案.md` 的「方案 C」。
    本目录的 `CantoPlay.java` 可以直接抄过去当参考实现 —— RIFF 解析、
    `AudioTrack.Builder` 参数、分块写入、**播完要 `stop()` 排空否则尾部被切**,
    这些坑都已经写在代码注释里了。

@@ -197,7 +197,7 @@ PY
 # 平板部署 = 把模块推进 chroot,再在 chroot 内跑本脚本的 install_core
 # =====================================================================
 install_tablet() {
-  log "===== moss-nano-port 部署到平板(格仔 · Debian chroot)====="
+  log "===== moss-nano-port 部署到平板(Android 设备 · Debian chroot)====="
   command -v adb >/dev/null 2>&1 || die "找不到 adb"
   local tgt; tgt="$(ct_pick_adb)" || die "三个 adb 目标全部掉线(Wi-Fi/VPN/USB 都试过)"
   ok "adb 目标:$tgt"

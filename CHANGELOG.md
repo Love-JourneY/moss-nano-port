@@ -81,6 +81,6 @@
 ## [0.1.4-module.0] — 2026-09-21
 
 ### 初始
-- moss-nano-port 部署到黑仔(Arch)与格仔(Android chroot)
+- moss-nano-port 部署到本机(Arch)与Android 设备(Android chroot)
 - 模块化:`install.sh` / `verify.sh` / `uninstall.sh` / `pack.sh`
 - 模型实体化到 `/var/lib/moss-nano-port/model`(729MB)

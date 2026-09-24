@@ -5,7 +5,7 @@
 # check-device.sh —— 【这台 Android 能不能跑 moss-nano-port 进程内推理?】
 #
 # ⚠️ 为什么有这个脚本(2026-09-24 实测教训):
-#   我们在格仔(平板)上把整条技术链【全部打通】了:
+#   我们在Android 设备(平板)上把整条技术链【全部打通】了:
 #     系统注册 → 系统绑定 → 服务启动 → 引擎就绪 → G2P → ORT 加载 → 系统调合成
 #   但【出不了声】—— 因为 683MB 模型被换出到 zram,进程被 ColorOS 的
 #   virtualFreeze 冻住,合成永远完不成。
@@ -105,7 +105,7 @@ else
   echo "     原因:"
   for r in "${REASONS[@]}"; do printf '       · %s\n' "$r"; done
   echo ""
-  echo "     ⚠️ 这不是代码问题(技术链已在格仔上全通),是【设备内存策略】问题。"
+  echo "     ⚠️ 这不是代码问题(技术链已在Android 设备上全通),是【设备内存策略】问题。"
   echo "     ⚠️ 已排除的解法(都有实测依据,别重试):"
   echo "        · fp16 量化        ⇒ 实测【内存反而多 92MB】(tools/exp-fp16-memory.py 可复跑)"
   echo "        · ORT 关 arena     ⇒ 实测无效"

@@ -53,7 +53,7 @@ Play 基础包上限 100MB ⇒ **便携包形态是对的**,而且它正好满�
 | **zram 已用** | **<= 6 GB** | 超过说明系统整体压力大,我们的常驻模型会被当"可回收" |
 | **无 virtualFreeze** | ColorOS / OPPO / OnePlus 系要小心 | 实测:它会冻结"不活跃"进程,**即使该进程被 system_server 绑定** |
 
-### 在格仔(OnePlus OPD2413 / Android 16)上的实测结论
+### 在Android 设备(OnePlus OPD2413 / Android 16)上的实测结论
 
 ```
 技术链【全部打通】(有日志证据):
