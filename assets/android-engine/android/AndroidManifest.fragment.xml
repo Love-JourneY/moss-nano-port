@@ -9,7 +9,8 @@
           表现为"注册了但从不被调用"(我们在这上面浪费过大量排查时间)。
     ③ <action android:name="android.intent.action.TTS_SERVICE" />
     ④ <category android:name="android.intent.category.DEFAULT" />
-       —— 对标 VoxSherpa 的声明,发现我们原缺这条。
+       —— 对照已退役的第三方 TTS 引擎(2026-09 卸载)的声明,发现我们原缺这条;
+       结论本身有效:`<category DEFAULT>` 缺失会表现为"注册了但从不被调用"。
     ⑤ <meta-data android:name="android.speech.tts" android:resource="@xml/tts_engine" />
        —— 指向引擎配置(settingsActivity 等)。
 
