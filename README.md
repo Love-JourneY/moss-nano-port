@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/icon/icon-512.png" alt="moss-nano-port" width="180">
+</p>
+
 # moss-nano-port
 
 > **让一个小模型在你自己的设备上说话。** 粤语 · 普通话 · 英文 · 日语 —— 全离线、不联网、不需要 GPU。
