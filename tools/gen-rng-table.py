@@ -7,7 +7,7 @@
   ⇒ 采样走向不同分支 ⇒ 模型的 should_continue 永不为 0
   ⇒ 一直生成到上限 ⇒ 多出的帧是噪声。
 
-用法:CANTO_VENV=/opt/moss-nano-port-venv ./gen-rng-table.py
+用法:CANTO_VENV=/opt/canto-tts-venv ./gen-rng-table.py
 """
 import os, subprocess, sys, pathlib
 
@@ -24,7 +24,7 @@ for i in range(0, len(vals), per):
     out.append("        " + ", ".join(f"{{v:.9f}}f" for v in vals[i:i+per]) + ",")
 print("\n".join(out))
 """
-venv = os.environ.get("CANTO_VENV", "/opt/moss-nano-port-venv")
+venv = os.environ.get("CANTO_VENV", "/opt/canto-tts-venv")
 py = os.path.join(venv, "bin", "python")
 body = subprocess.run([py, "-c", code], capture_output=True, text=True, check=True).stdout.rstrip()
 hdr = OUT.read_text(encoding="utf-8").split("    public static final float[] V = {")[0] if OUT.exists() else ""

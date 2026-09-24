@@ -13,7 +13,7 @@ CT_VERSION="0.1.4-module.1"
 
 # ---------- 路径契约(FHS 硬底线:程序→/opt,状态/数据→/var/lib,命令→/usr/local/bin) ----------
 CT_OPT_DIR="/opt/moss-nano-port"           # 模块本体(脚本+文档)安装位 —— add-on application software
-CT_VENV_DIR="/opt/moss-nano-port-venv"     # python 虚拟环境(笔记本既有,平板新建)
+CT_VENV_DIR="/opt/canto-tts-venv"     # python 虚拟环境(笔记本既有,平板新建)
 CT_DATA_DIR="/var/lib/moss-nano-port"      # 状态/数据(模型权重、HF 缓存)—— 变量数据归 /var/lib
 CT_MODEL_DIR="$CT_DATA_DIR/model"     # 实体化后的模型目录(见 NOTES.md「符号链接陷阱」)
 CT_BIN="/usr/local/bin/vsay-canto"    # 面向用户的命令行包装
@@ -23,7 +23,7 @@ CT_PKG_DIR_REL="pkg"
 
 # ---------- 网络镜像(国内直连 HF 会卡;仅首次下载模型时用) ----------
 CT_HF_MIRROR="${CT_HF_MIRROR:-https://hf-mirror.com}"
-CT_HF_REPO="typangaa/moss-nano-port-nano"
+CT_HF_REPO="typangaa/canto-tts-nano"
 
 # ---------- 日志 ----------
 if [ -t 1 ]; then

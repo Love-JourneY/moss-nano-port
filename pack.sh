@@ -59,8 +59,8 @@ done
 [ "$n_wheels" -gt 0 ] || die "pkg/ 里没有任何轮子 —— 离线自洽不成立"
 ok "轮子合计 $n_wheels 个"
 
-if [ -d "$ROOT/models/moss-nano-port-nano" ]; then
-  ok "模型归档:$(du -sh "$ROOT/models/moss-nano-port-nano" | cut -f1)"
+if [ -d "$ROOT/models/canto-tts-nano" ]; then
+  ok "模型归档:$(du -sh "$ROOT/models/canto-tts-nano" | cut -f1)"
 else
   warn "包内无模型 ⇒ 目标机首次安装需联网(装完即离线)"
 fi

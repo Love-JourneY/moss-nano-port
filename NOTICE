@@ -12,7 +12,7 @@
 
 | 组件 | 来源 | 许可 | 备注 |
 |---|---|---|---|
-| `moss-nano-port-nano-v1`(粤语 TTS 权重) | `typangaa/moss-nano-port-nano`(HuggingFace)/ GitHub `typangaa/moss-nano-port` | **Apache-2.0** | 模型卡自带 `license: apache-2.0` |
+| `canto-tts-nano-v1`(粤语 TTS 权重) | `typangaa/canto-tts-nano`(HuggingFace)/ GitHub `typangaa/canto-tts` | **Apache-2.0** | 模型卡自带 `license: apache-2.0` |
 | `MOSS-TTS-Nano`(基座,0.1B) | `OpenMOSS-Team/MOSS-TTS-Nano-100M` / MOSI.AI + OpenMOSS | **Apache-2.0** | moss-nano-port 由它微调而来 |
 | **`MOSS-TTS-Nano-100M-ONNX`**(基础版) | `OpenMOSS-Team/MOSS-TTS-Nano-100M-ONNX`(HuggingFace) | **Apache-2.0** | ★ 2026-09-28 加:普通话/英文/日语用。【可选】,见 README 的下载说明 |
 | **SentencePiece 词表** | 从上面这个模型的 `tokenizer.model` 导出(`assets/android-tok/sp-vocab-16384.tsv`) | **Apache-2.0**(随模型) | 我们只做了格式转换(protobuf → TSV),**未改内容** |
@@ -23,7 +23,7 @@
 
 | 语言 | 模型 | 音色数 | 音色来源 |
 |---|---|---|---|
-| **粤语** | `moss-nano-port-nano`(微调) | 7 | `voicebank/` |
+| **粤语** | `canto-tts-nano`(微调) | 7 | `voicebank/` |
 | **普通话** | `MOSS-TTS-Nano-100M-ONNX`(基础版) | 6 | `builtin_voices` |
 | **英文** | 同上 | 5 | `builtin_voices` |
 | **日语** | 同上 | 7 | `builtin_voices` |
@@ -64,5 +64,5 @@
 1. **商业使用**:模型 Apache-2.0 ✅ 可商用;我们的代码 AGPL-3.0(AGPL 要求**衍生作品也 AGPL**,
    且**网络服务**也触发开源义务 ⇒ 若你把它做成在线服务,须提供源码)。
 2. **再分发**:请**同时带上本 NOTICE + LICENSE**,并保留上游的许可声明。
-3. **训练数据**:moss-nano-port 权重的训练数据**不公开** ⇒ 我们只保证"按模型卡声明的许可使用权重",
+3. **训练数据**:canto-tts 权重的训练数据**不公开** ⇒ 我们只保证"按模型卡声明的许可使用权重",
    **不能替上游担保其训练数据的合规性**。

@@ -5,7 +5,7 @@
 >
 > **阅读约定**
 > - 所有源码引用格式为 `文件:行号`,路径以仓库根为基准:
->   - `PKG/` = `/opt/moss-nano-port-venv/lib/python3.14/site-packages/canto_tts/`
+>   - `PKG/` = `/opt/canto-tts-venv/lib/python3.14/site-packages/canto_tts/`
 >   - `LIB/` = `/opt/moss-nano-port/lib/`
 >   - `MODEL/` = `/var/lib/moss-nano-port/model/`
 > - 形如 `int32[1,N,17]` 的形状,**标 `(meta)` 的来源是厂商随包的 `*_browser_onnx_meta.json`;
@@ -29,7 +29,7 @@
 | 行宽 | **row_width = 17 = n_vq + 1** | 见 §2.4 |
 | 词表 | **16472**(基础 SP 词表 16384 + 88 个音素特殊 token) | `model_config.vocab_size`;`MODEL/added_tokens.json` |
 | 模型总体积 | 729 MB(TTS 640 MiB + codec 86 MiB) | `NOTES.md:53`、`ls -l` |
-| ORT 版本 | onnxruntime **1.30.0** | `/opt/moss-nano-port-venv/.../onnxruntime-1.30.0.dist-info` |
+| ORT 版本 | onnxruntime **1.30.0** | `/opt/canto-tts-venv/.../onnxruntime-1.30.0.dist-info` |
 | 默认线程 | **4**(实测最优;8/12 反而慢数倍) | `PKG/backends/onnx_backend.py:124`、`NOTES.md:433-440` |
 | 默认最大帧数 | **375 帧 = 30 s** | `browser_poc_manifest.json` `generation_defaults.max_new_frames` |
 
@@ -1087,7 +1087,7 @@ codec_decode_step           ← codec_meta.files.decode_step            = moss_a
 
 | 项 | 说明 |
 |---|---|
-| **只读** | 未修改 `/opt/moss-nano-port/**`、`/var/lib/moss-nano-port/**`、`/opt/moss-nano-port-venv/**` 任何文件 |
+| **只读** | 未修改 `/opt/moss-nano-port/**`、`/var/lib/moss-nano-port/**`、`/opt/canto-tts-venv/**` 任何文件 |
 | **未安装任何包** | venv 里**没有** `onnx` 包(实测 `ModuleNotFoundError`)。本次用的 `.onnx` 图头解析器是**现场手写的 protobuf wire-format 解析器**(`/tmp/onnxprobe.py`、`/tmp/constprobe.py`),只读 `.onnx` 容器(几十~几百 KB),**不触碰 `.data` 权重文件** |
 | **未加载模型** | 全程无 `InferenceSession` 构造。`NOTES.md:512-515` 明确提示「venv 里没有 onnx 包;要读算子集合得 `pip install --target /tmp/qv onnx`,**别往 venv 装**」—— 本次**没有装**,改用自写解析器 |
 | **形状/dtype 来源** | 标 `(onnx)` 的 = 图头 `graph.input`/`graph.output` 的 `TypeProto` 实测;标 `(meta)` 的 = `*_browser_onnx_meta.json`;标 `(源码)` 的 = Python 代码 |

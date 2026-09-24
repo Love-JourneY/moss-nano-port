@@ -37,7 +37,7 @@ import wave
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 
-CANTO = "/opt/moss-nano-port-venv/bin/moss-nano-port"
+CANTO = "/opt/canto-tts-venv/bin/moss-nano-port"
 MODEL = "/var/lib/moss-nano-port/model"
 P2Y = os.path.join(os.path.dirname(ROOT), "voice-tts", "backend", "p2y.py")
 ASR_MODEL = "alvanlii/whisper-small-cantonese"

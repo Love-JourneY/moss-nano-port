@@ -337,6 +337,6 @@ P3 必须专门验一条:**连续合成 N 句,检查是否存在中途停滞 / V
 ## 8. 参考
 
 - 调用序列说明书:`docs/python-pipeline.md`(1099 行,精确到张量名/形状/dtype)
-- 参照实现:`/opt/moss-nano-port/lib/tts_stream.py`、`/opt/moss-nano-port-venv/.../canto_tts/`
+- 参照实现:`/opt/moss-nano-port/lib/tts_stream.py`、`/opt/canto-tts-venv/.../canto_tts/`
 - 模型:`/var/lib/moss-nano-port/model`(只读,未改动)
 - 产出音频:`results/android_canto.wav` / `results/ref_canto.wav`

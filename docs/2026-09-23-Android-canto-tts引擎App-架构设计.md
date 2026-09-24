@@ -290,7 +290,7 @@ Android 15+ 由 TextToSpeechManagerPerUserService 代绑
 | 已有 | 复用方式 |
 |---|---|
 | `/opt/moss-nano-port/lib/tts_stream.py` | **调用顺序的参照实现**(读它把 prefill→decode→tokenizer 摸清) |
-| `canto_tts` Python SDK(`/opt/moss-nano-port-venv`) | 同上;不是直接复用(要移植到 Java/Kotlin) |
+| `canto_tts` Python SDK(`/opt/canto-tts-venv`) | 同上;不是直接复用(要移植到 Java/Kotlin) |
 | `voicebank/*.json` | **直接复用**(音色 codes + 74 维音色指纹) |
 | `p2y.py`(1907 条) | **移植成 Kotlin**(纯规则表,无依赖) |
 | `SherpaTtsEngine` / `VoiceTtsPlayer` / `SpeakService` | **复用播放链路**(AudioTrack 那套已验证) |

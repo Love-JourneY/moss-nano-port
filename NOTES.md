@@ -64,7 +64,7 @@ ONNX 载入模型时会做 external-data 路径安全校验:**只允许外部数
 把模型**实体化**到一个平坦目录 —— `cp -rL` 解引用所有符号链接:
 
 ```bash
-SNAP=$(ls -d ~/.cache/huggingface/hub/models--typangaa--moss-nano-port-nano/snapshots/*/ | head -1)
+SNAP=$(ls -d ~/.cache/huggingface/hub/models--typangaa--canto-tts-nano/snapshots/*/ | head -1)
 cp -rL "$SNAP" /var/lib/moss-nano-port/model      # ⚠️ -L 是关键,不能省
 ```
 
@@ -348,15 +348,15 @@ cd /tmp/restore/moss-nano-port && ./install.sh --dry-run                      # 
 ```bash
 # 换模型版本(先保住旧的)
 sudo mv /var/lib/moss-nano-port/model /var/lib/moss-nano-port/model.old
-HF_ENDPOINT=https://hf-mirror.com /opt/moss-nano-port-venv/bin/python - <<'PY'
+HF_ENDPOINT=https://hf-mirror.com /opt/canto-tts-venv/bin/python - <<'PY'
 from huggingface_hub import snapshot_download
-print(snapshot_download("typangaa/moss-nano-port-nano"))
+print(snapshot_download("typangaa/canto-tts-nano"))
 PY
 # ⚠️ 别忘 -L
 sudo cp -rL <上一步打印的路径> /var/lib/moss-nano-port/model
 
 # 只验合成(不播),快
-/opt/moss-nano-port-venv/bin/moss-nano-port synthesize "測試。" -o /tmp/t.wav \
+/opt/canto-tts-venv/bin/moss-nano-port synthesize "測試。" -o /tmp/t.wav \
     --checkpoint /var/lib/moss-nano-port/model && ffprobe -v error \
     -show_entries format=duration -of default=nw=1 /tmp/t.wav
 
@@ -486,10 +486,10 @@ cd ~/Documents/repo/moss-nano-port && ./verify.sh --play
 ```bash
 # 一次性(推荐,零额外内存)
 printf '%s\n' "今日天氣幾好，" "我哋去食飯。" | \
-  /opt/moss-nano-port-venv/bin/python /opt/moss-nano-port/lib/tts_stream.py --outdir /tmp/x
+  /opt/canto-tts-venv/bin/python /opt/moss-nano-port/lib/tts_stream.py --outdir /tmp/x
 
 # 常驻(要极致延迟时;空闲 600s 自动退出)
-/opt/moss-nano-port-venv/bin/python /opt/moss-nano-port/lib/tts_stream.py --serve \
+/opt/canto-tts-venv/bin/python /opt/moss-nano-port/lib/tts_stream.py --serve \
   --sock /run/user/1000/moss-nano-port.sock --idle-timeout 600 &
 ```
 
@@ -533,7 +533,7 @@ A/B 样本在 `docs/samples/`(`A-B对比_先原版后int8量化_seed*.wav` = 原
 ### 11.6 复现命令要点
 
 - 量 ONNX 契约:`onnxruntime.InferenceSession(p).get_inputs()/get_outputs()`(venv 里**没有** `onnx` 包;
-  要读算子集合得 `pip install --target /tmp/qv onnx`,**别往 `/opt/moss-nano-port-venv` 装**(root 所有,pip 会 Permission denied)。
+  要读算子集合得 `pip install --target /tmp/qv onnx`,**别往 `/opt/canto-tts-venv` 装**(root 所有,pip 会 Permission denied)。
 - ⚠️ **量化时外部数据文件不能用软链** —— onnx 校验报
   `ValidationError: ... should be stored in <path>.data, but it is a symbolic link`。必须真拷贝。
 - 平板跑测:`su -c 'sh /data/local/linux/p2p-chroot.sh run "bash /tmp/xxx.sh"'`;

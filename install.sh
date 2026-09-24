@@ -111,7 +111,7 @@ install_core() {
   # ---------- ③ 离线轮子安装 ----------
   local pkgdir="$root/$CT_PKG_DIR_REL/${arch}-py${pyv}"
   if [ "$DRY" = "1" ]; then
-    printf '  %s[dry-run]%s pip install --no-index --find-links %s moss-nano-port ...\n' "$C_YEL" "$C_OFF" "$pkgdir" >&2
+    printf '  %s[dry-run]%s pip install --no-index --find-links %s canto-tts ...\n' "$C_YEL" "$C_OFF" "$pkgdir" >&2
   elif [ -d "$pkgdir" ] && compgen -G "$pkgdir/*.whl" >/dev/null 2>&1; then
     log "离线安装轮子:$pkgdir($(ls "$pkgdir"/*.whl 2>/dev/null | wc -l) 个)"
     if ! "$CT_VENV_DIR/bin/pip" install --no-index --find-links "$pkgdir" \
@@ -138,7 +138,7 @@ install_core() {
     ok "模型已实体化:$CT_MODEL_DIR"
   else
     run_root mkdir -p "$CT_DATA_DIR"
-    local arc="$root/models/moss-nano-port-nano"
+    local arc="$root/models/canto-tts-nano"
     if [ -d "$arc" ]; then
       log "从包内归档安装模型:$arc"
       run_root rm -rf "$CT_MODEL_DIR"
@@ -236,9 +236,9 @@ install_tablet() {
     log "推送 aarch64 离线轮子($(du -sh "$pkgdir" 2>/dev/null | cut -f1))"
     adb -s "$tgt" push "$pkgdir" "$stage/pkg/aarch64-py313" >/dev/null 2>&1 || warn "推送轮子失败"
   fi
-  if [ "$need_model" = "1" ] && [ -d "$root/models/moss-nano-port-nano" ]; then
-    log "推送模型归档($(du -sh "$root/models/moss-nano-port-nano" 2>/dev/null | cut -f1))"
-    adb -s "$tgt" push "$root/models/moss-nano-port-nano" "$stage/models/moss-nano-port-nano" >/dev/null 2>&1 || warn "推送模型失败"
+  if [ "$need_model" = "1" ] && [ -d "$root/models/canto-tts-nano" ]; then
+    log "推送模型归档($(du -sh "$root/models/canto-tts-nano" 2>/dev/null | cut -f1))"
+    adb -s "$tgt" push "$root/models/canto-tts-nano" "$stage/models/canto-tts-nano" >/dev/null 2>&1 || warn "推送模型失败"
   fi
   if [ "$need_wheels" = "1" ] && [ -d "$root/$CT_PKG_DIR_REL/deb-aarch64" ]; then
     log "推送离线 .deb(venv 引导用)"

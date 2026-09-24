@@ -16,7 +16,7 @@ export XDG_RUNTIME_DIR=/run/user/1000 PULSE_SERVER=unix:/run/user/1000/pulse/nat
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OLD="$HERE/backups/vsay-canto.bak-20260922"
 NEW="$HERE/bin/vsay-canto"
-PY=/opt/moss-nano-port-venv/bin/python
+PY=/opt/canto-tts-venv/bin/python
 TS="$HERE/lib/tts_stream.py"
 SOCK=/run/user/1000/moss-nano-port.sock
 N=${N:-5}

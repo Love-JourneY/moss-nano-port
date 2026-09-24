@@ -1,6 +1,9 @@
-# moss-nano-port (moss-nano-port)
+# moss-nano-port
 
-> MOSS-TTS-Nano 的下游配套引擎 —— **对外名:`moss-nano-port`** · 实现名:`moss-nano-port`(仓库与 Java 包名保持不变)
+> MOSS-TTS-Nano 的下游配套引擎 —— 让这个小模型在你自己的设备上说话(粤语 / 普通话 / 英文 / 日语)
+>
+> ⚠️ 实现内部标识:`applicationId = canto.tts`、Java 包名 `canto`
+> (刻意保持不动 —— 改了会让平板上已安装的 App 变成孤儿)
 >
 > ⚠️ **非官方 · 社区项目** —— 本项目是 [OpenMOSS Team](https://github.com/OpenMOSS/MOSS-TTS)
 > (复旦大学 NLP / 上海创智学院 / 模思智能)的 **MOSS-TTS-Nano** 的【下游配套】,
@@ -107,7 +110,7 @@ docs/2026-09-24-两端语音一致性.md  chroot ↔ Android 的一致性论证
 | 层次 | 内容 | 许可 |
 |---|---|---|
 | **本模块自有代码** | `install.sh` · `verify.sh` · `uninstall.sh` · `pack.sh` · `bin/` · `lib/` · `tools/` · `docs/` · 本 README | **AGPL-3.0-or-later** |
-| **上游模型/运行时** | moss-nano-port 权重(`moss-nano-port-nano-v1`)· MOSS-TTS-Nano · moss-nano-port pip 包 | **Apache-2.0** |
+| **上游模型/运行时** | canto-tts 权重(`canto-tts-nano-v1`)· MOSS-TTS-Nano · canto-tts pip 包 | **Apache-2.0** |
 | | ONNX Runtime | **MIT** |
 | **音色库参照音频** | `cv01~cv04`(Common Voice 22 yue) | **CC-0** |
 | | `qwen_hk` / `qwen_short` | **Apache-2.0** + **CC-0** 数据 |
@@ -187,7 +190,7 @@ Android 侧的 `tinyplay` 也打不开设备;`app_process` 在 Android 16 上直
 粤语(香港)文字转语音。给它中文文本,它吐一个 `.wav`。
 
 - **引擎**:`moss-nano-port` 0.1.4(pip 包,Apache-2.0)+ ONNX Runtime,**纯 CPU**
-- **模型**:`typangaa/moss-nano-port-nano`(约 729MB,已归档进本包)
+- **模型**:`typangaa/canto-tts-nano`(约 729MB,已归档进本包)
 - **G2P**:`canto-hk-g2p` 2.6.1(Rust 编译的粤语字→粤拼转换,**有 aarch64 轮子**)
 - **音色**:单一男声,不可选
 - **速度**:笔记本上 2 段约 **5.1 秒**(常驻热态;旧版逐段重载是 10.8 秒)⇒ **2.1x**;
@@ -272,7 +275,7 @@ N=7 ./bench.sh              # 改前/改后耗时对比(自动拿 backups/ 里�
 
 | 放什么 | 位置 | 为什么 |
 |---|---|---|
-| python venv | `/opt/moss-nano-port-venv` | 程序 = add-on software |
+| python venv | `/opt/canto-tts-venv` | 程序 = add-on software |
 | 模块本体+文档 | `/opt/moss-nano-port` | 同上;**文档随包走**,换机器不靠翻会话 |
 | 安卓侧播放器参考实现 | `/opt/moss-nano-port/assets/android/` | 给「方案 C」App 抄的 `AudioTrack` 代码(见 NOTES §7) |
 | 模型权重 | `/var/lib/moss-nano-port/model` | 状态/数据归 `/var/lib` |
@@ -285,7 +288,7 @@ N=7 ./bench.sh              # 改前/改后耗时对比(自动拿 backups/ 里�
 `install.sh` 拷进 `/opt` 时会排除它们,平板装完也会清掉 chroot 里的副本。
 
 平板侧全部装**在 chroot 内部** `/data/local/linux/debian` 之下,路径与笔记本同名同层(同构)。
-实测足迹:`/opt/moss-nano-port` 110K + `/opt/moss-nano-port-venv` 191M + `/var/lib/moss-nano-port` 730M ≈ **921MB**。
+实测足迹:`/opt/moss-nano-port` 110K + `/opt/canto-tts-venv` 191M + `/var/lib/moss-nano-port` 730M ≈ **921MB**。
 
 **没有** `/etc/profile.d/` 注入、**没有** `.bashrc` 改动、**没有** systemd 单元、
 **没有**常驻守护 —— 靠绝对路径的命令即可,零全局污染(熵减)。
@@ -297,7 +300,7 @@ N=7 ./bench.sh              # 改前/改后耗时对比(自动拿 backups/ 里�
 | 变量 | 默认 | 作用 |
 |---|---|---|
 | `VSAY_CANTO_MODEL` | `/var/lib/moss-nano-port/model` | 模型目录 |
-| `VSAY_CANTO_VENV` | `/opt/moss-nano-port-venv` | venv 目录 |
+| `VSAY_CANTO_VENV` | `/opt/canto-tts-venv` | venv 目录 |
 | `VSAY_CANTO_CHUNK` | `50` | 每段最大字数(nano 模型对长文本会漂,切段更稳) |
 | `VSAY_CANTO_MAXTOTAL` | `0` | 限制总字数(0=不限) |
 | `VSAY_CANTO_DEADLINE` | `180` | 总时长上限秒数 |
@@ -318,7 +321,7 @@ N=7 ./bench.sh              # 改前/改后耗时对比(自动拿 backups/ 里�
 
 ```bash
 # 引擎直调(绕过包装,排障用)
-/opt/moss-nano-port-venv/bin/moss-nano-port synthesize "多謝晒。" -o /tmp/o.wav \
+/opt/canto-tts-venv/bin/moss-nano-port synthesize "多謝晒。" -o /tmp/o.wav \
     --checkpoint /var/lib/moss-nano-port/model
 
 # 量一下时长/采样率
@@ -367,7 +370,7 @@ DSH 的回复是普通话书面文,直接喂粤语模型 = **半咸淡**。
 
 ```bash
 # 微调权重(683MB,Apache-2.0)
-huggingface-cli download typangaa/moss-nano-port-nano --local-dir models/moss-nano-port-nano
+huggingface-cli download typangaa/canto-tts-nano --local-dir models/canto-tts-nano
 ```
 
 ### ② 普通话 / 英文 / 日语(可选)

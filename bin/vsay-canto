@@ -3,7 +3,7 @@
 # Copyright (C) 2026  Nija (bubu12) and contributors
 # moss-nano-port module —— 自有代码,AGPL-3.0-or-later(全文见 ./LICENSE;第三方见 ./NOTICE)
 # ---------------------------------------------------------------------------
-# vsay-canto —— 粤语播报(moss-nano-port-nano·男声)
+# vsay-canto —— 粤语播报(canto-tts-nano·男声)
 #
 # 语义与 vsay-yue 对齐:文本从参数或 stdin 进来,合成后立刻播出。
 #
@@ -44,7 +44,7 @@
 #
 # 环境变量:
 #   VSAY_CANTO_MODEL   模型目录(默认 /var/lib/moss-nano-port/model)
-#   VSAY_CANTO_VENV    venv 目录(默认 /opt/moss-nano-port-venv)
+#   VSAY_CANTO_VENV    venv 目录(默认 /opt/canto-tts-venv)
 #   VSAY_CANTO_CHUNK   每段最大字数(默认 50;nano 模型对长文本会漂,切段更稳)
 #   VSAY_CANTO_MAXTOTAL 限制总字数(0=不限)
 #   VSAY_CANTO_DEADLINE 总时长上限秒数(默认 180,防超长请求啃 CPU)
@@ -58,7 +58,7 @@
 set -uo pipefail
 
 MODEL="${VSAY_CANTO_MODEL:-/var/lib/moss-nano-port/model}"
-VENV="${VSAY_CANTO_VENV:-/opt/moss-nano-port-venv}"
+VENV="${VSAY_CANTO_VENV:-/opt/canto-tts-venv}"
 CHUNK="${VSAY_CANTO_CHUNK:-50}"
 MAXTOTAL="${VSAY_CANTO_MAXTOTAL:-0}"
 DEADLINE_S="${VSAY_CANTO_DEADLINE:-180}"

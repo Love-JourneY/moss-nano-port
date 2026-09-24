@@ -75,9 +75,9 @@ fi
 MODEL_SRC="${CANTO_MODEL_SRC:-}"
 if [ -z "$MODEL_SRC" ]; then
   # ⚠️ 顺序 = 优先级:【包内 → 本机安装位】
-  #   包内实际在 models/moss-nano-port-nano/(不是 models/ 直接放)
-  for c in "$HERE/../models/moss-nano-port-nano" \
-           "$HERE/models/moss-nano-port-nano" \
+  #   包内实际在 models/canto-tts-nano/(不是 models/ 直接放)
+  for c in "$HERE/../models/canto-tts-nano" \
+           "$HERE/models/canto-tts-nano" \
            "$HERE/../models" \
            "$HERE/models" \
            "/var/lib/moss-nano-port/model"; do
